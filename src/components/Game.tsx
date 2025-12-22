@@ -352,7 +352,7 @@ export function Game() {
                         </button>
                     )}
                     <button onClick={() => setShowSettings(true)} className="settings-link-button">
-                        Change Numbers
+                        Settings
                     </button>
                 </div>
             </div>
