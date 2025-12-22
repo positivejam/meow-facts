@@ -180,12 +180,14 @@ export function Game() {
             <div className="session-complete">
                 <h2>Great job!</h2>
                 <StatsDisplay attempts={attempts} targetTime={settings.targetTime} />
-                <button onClick={handleNewSession} className="new-session-button">
-                    Practice More
-                </button>
-                <button onClick={() => setShowSettings(true)} className="settings-link-button">
-                    Change Numbers
-                </button>
+                <div className="session-actions">
+                    <button onClick={handleNewSession} className="new-session-button">
+                        Practice More
+                    </button>
+                    <button onClick={() => setShowSettings(true)} className="settings-link-button">
+                        Change Numbers
+                    </button>
+                </div>
             </div>
         );
     }

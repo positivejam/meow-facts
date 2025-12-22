@@ -183,6 +183,14 @@
   font-weight: 800;
 }
 
+.session-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 30px;
+  width: 100%;
+}
+
 .new-session-button {
   font-size: 1.5rem;
   padding: 16px 40px;
@@ -193,7 +201,6 @@
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
-  margin-top: 30px;
 }
 
 .new-session-button:hover {
@@ -268,7 +275,6 @@
   font-weight: 700;
   cursor: pointer;
   transition: all 0.2s;
-  margin-top: 12px;
 }
 
 .settings-link-button:hover {
