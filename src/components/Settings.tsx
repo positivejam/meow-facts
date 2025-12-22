@@ -62,7 +62,6 @@ export function Settings({ settings, onSettingsChange, onClose }: SettingsProps)
 
                 <p className="settings-description">
                     Select which numbers to practice. You'll get facts involving those numbers.
-                    For example, selecting "1" gives you 1+0, 1+1, ..., 1+12, plus 0+1, 2+1, ..., 12+1.
                 </p>
 
                 <div className="checkbox-grid">
