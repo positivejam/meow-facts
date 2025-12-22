@@ -26,6 +26,7 @@ export interface GameSettings {
   maxNumber: number;
   cardsPerSession: number;
   enabledNumbers: number[]; // Which numbers to include in practice (e.g., [0, 1, 2])
+  targetTime: number; // Target response time in milliseconds for "fast" answers
 }
 
 export interface ProblemAttempt {

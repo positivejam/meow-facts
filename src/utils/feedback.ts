@@ -38,7 +38,7 @@ export function getFeedbackMessage(type: FeedbackType, correctAnswer?: number): 
 export function determineFeedbackType(
   isCorrect: boolean,
   responseTime: number,
-  targetTime: number = 3000
+  targetTime: number = 5000
 ): FeedbackType {
   if (!isCorrect) {
     return 'incorrect';

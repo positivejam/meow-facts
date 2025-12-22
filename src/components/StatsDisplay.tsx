@@ -2,9 +2,10 @@ import type { ProblemAttempt } from '../types/game';
 
 interface StatsDisplayProps {
     attempts: ProblemAttempt[];
+    targetTime?: number;
 }
 
-export function StatsDisplay({ attempts }: StatsDisplayProps) {
+export function StatsDisplay({ attempts, targetTime = 5000 }: StatsDisplayProps) {
     if (attempts.length === 0) {
         return null;
     }
@@ -17,7 +18,7 @@ export function StatsDisplay({ attempts }: StatsDisplayProps) {
     const avgTimeSec = (avgTime / 1000).toFixed(1);
 
     const fastCorrect = attempts.filter(
-        a => a.isCorrect && a.responseTime <= 3000
+        a => a.isCorrect && a.responseTime <= targetTime
     ).length;
 
     return (

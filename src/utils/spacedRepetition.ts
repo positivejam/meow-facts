@@ -7,7 +7,8 @@ import type { MathFactCard } from '../types/game';
 export function updateCard(
     card: MathFactCard,
     isCorrect: boolean,
-    responseTime: number
+    responseTime: number,
+    targetTime: number = 5000
 ): MathFactCard {
     const now = Date.now();
     const newTotalAttempts = card.totalAttempts + 1;
@@ -25,7 +26,6 @@ export function updateCard(
     } else {
         // Fast correct answer = higher quality
         // Slow correct answer = lower quality
-        const targetTime = 3000; // 3 seconds is the target
         if (responseTime < targetTime) {
             quality = 5; // Perfect
         } else if (responseTime < targetTime * 1.5) {

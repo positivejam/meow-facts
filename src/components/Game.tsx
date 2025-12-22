@@ -15,6 +15,7 @@ const DEFAULT_SETTINGS: GameSettings = {
     maxNumber: 12,
     cardsPerSession: 10,
     enabledNumbers: Array.from({ length: 13 }, (_, i) => i), // All numbers 0-12
+    targetTime: 5000, // 5 seconds
 };
 
 const SETTINGS_STORAGE_KEY = 'meow-facts-settings';
@@ -86,7 +87,7 @@ export function Game() {
         const isCorrect = userAnswer === currentCard.problem.correctAnswer;
 
         // Determine feedback type and get message
-        const fbType = determineFeedbackType(isCorrect, responseTime);
+        const fbType = determineFeedbackType(isCorrect, responseTime, settings.targetTime);
         setFeedbackType(fbType);
         setFeedbackMessage(
             getFeedbackMessage(fbType, currentCard.problem.correctAnswer)
@@ -103,7 +104,7 @@ export function Game() {
         setAttempts([...attempts, attempt]);
 
         // Update the card with spaced repetition
-        const updatedCard = updateCard(currentCard, isCorrect, responseTime);
+        const updatedCard = updateCard(currentCard, isCorrect, responseTime, settings.targetTime);
 
         // Update all cards
         const updatedAllCards = allCards.map(card =>
@@ -178,7 +179,7 @@ export function Game() {
         return (
             <div className="session-complete">
                 <h2>Great job!</h2>
-                <StatsDisplay attempts={attempts} />
+                <StatsDisplay attempts={attempts} targetTime={settings.targetTime} />
                 <button onClick={handleNewSession} className="new-session-button">
                     Practice More
                 </button>

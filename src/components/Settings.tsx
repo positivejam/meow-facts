@@ -39,7 +39,15 @@ export function Settings({ settings, onSettingsChange, onClose }: SettingsProps)
         });
     };
 
+    const handleTargetTimeChange = (seconds: number) => {
+        onSettingsChange({
+            ...settings,
+            targetTime: seconds * 1000, // Convert to milliseconds
+        });
+    };
+
     const currentEnabled = settings.enabledNumbers || allNumbers;
+    const targetTimeSeconds = settings.targetTime / 1000;
 
     // Calculate number of facts: for k selected numbers and max M,
     // we get k * (2 * (M + 1) - k) facts
@@ -86,6 +94,27 @@ export function Settings({ settings, onSettingsChange, onClose }: SettingsProps)
                     <p className="selected-numbers">
                         Selected numbers: {currentEnabled.join(', ')}
                     </p>
+                </div>
+
+                <div className="settings-section">
+                    <h3>Speed Target</h3>
+                    <p className="settings-hint">
+                        How fast should answers be to count as "fast"?
+                    </p>
+                    <div className="slider-control">
+                        <input
+                            type="range"
+                            min="2"
+                            max="10"
+                            step="0.5"
+                            value={targetTimeSeconds}
+                            onChange={(e) => handleTargetTimeChange(Number(e.target.value))}
+                            className="time-slider"
+                        />
+                        <div className="slider-value">
+                            {targetTimeSeconds} second{targetTimeSeconds !== 1 ? 's' : ''}
+                        </div>
+                    </div>
                 </div>
 
                 <button onClick={onClose} className="start-button">
