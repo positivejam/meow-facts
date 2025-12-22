@@ -68,6 +68,8 @@ export interface RescueMission {
   id: string;
   animalType: 'kitten' | 'puppy' | 'snail';
   animalName: string;
+  animalPronoun: 'she' | 'he';
+  animalProblem: 'cold' | 'hungry' | 'lonely' | 'tired';
   location: 'living-room';
   state: AnimalState;
   correctAnswers: number;

@@ -4,8 +4,9 @@ import { generateAllFacts } from '../utils/cardGenerator';
 import { selectCards, updateCard } from '../utils/spacedRepetition';
 import { saveProgress, loadProgress } from '../utils/storage';
 import { determineFeedbackType, type FeedbackType } from '../utils/feedback';
-import { createNewMission, determineAnimalState, isMissionComplete, isMissionSuccessful } from '../utils/rescue';
+import { createNewMission, determineAnimalState, isMissionComplete, isMissionSuccessful, getMissionIntroDialogue, getMissionCompleteDialogue } from '../utils/rescue';
 import { getSunshineDialogue } from '../utils/sunshine';
+import { MissionIntro } from './MissionIntro';
 import { loadSparkles, saveSparkles, awardSparkles, SPARKLES_PER_FAST_CORRECT } from '../utils/sparkles';
 import { loadRescueProgress, saveRescueProgress } from '../utils/rescueStorage';
 import { ProblemDisplay } from './ProblemDisplay';
@@ -45,6 +46,7 @@ export function Game() {
 
     // Rescue game state
     const [currentMission, setCurrentMission] = useState<RescueMission | null>(null);
+    const [showMissionIntro, setShowMissionIntro] = useState(true);
     const [sparkles, setSparkles] = useState<SparklesData>({ total: 0, earnedThisSession: 0 });
     const [sunshineDialogue, setSunshineDialogue] = useState<string>('');
     const [sunshineDialogueType, setSunshineDialogueType] = useState<SunshineDialogueType>('intro');
@@ -105,14 +107,15 @@ export function Game() {
         setCurrentCardIndex(0);
         setAttempts([]);
         setShowFeedback(false);
-
-        // Show intro dialogue
-        const intro = getSunshineDialogue('intro');
-        setSunshineDialogue(intro);
-        setSunshineDialogueType('intro');
+        setShowMissionIntro(true);
 
         // Save mission
         saveRescueProgress({ currentMission: mission });
+    };
+
+    const handleAcceptMission = () => {
+        setShowMissionIntro(false);
+        setProblemStartTime(Date.now());
     };
 
     const handleAnswer = (userAnswer: number) => {
@@ -271,11 +274,8 @@ export function Game() {
         setCurrentCardIndex(0);
         setAttempts([]);
         setShowFeedback(false);
+        setShowMissionIntro(true);
         setProblemStartTime(Date.now());
-
-        // Show encouraging intro
-        setSunshineDialogueType('intro');
-        setSunshineDialogue(getSunshineDialogue('intro'));
     };
 
     const handleSettingsChange = (newSettings: GameSettings) => {
@@ -320,37 +320,39 @@ export function Game() {
             handleMissionComplete();
         }
 
+        const completeDialogue = missionSuccessful
+            ? getMissionCompleteDialogue(currentMission)
+            : `Great effort! ${currentMission.animalName} appreciates your help. Ready to try again?`;
+
         return (
             <div className="session-complete">
-                {missionSuccessful ? (
+                <h2>{missionSuccessful ? 'Mission Complete!' : "Let's Try Again!"}</h2>
+
+                <div className="mission-complete-characters">
+                    <AnimalDisplay
+                        animalType={currentMission.animalType}
+                        state={missionSuccessful ? 'rescued' : currentMission.state}
+                        animalName={currentMission.animalName}
+                    />
+                    <SunshineDialogue
+                        dialogue={completeDialogue}
+                        type={missionSuccessful ? 'rescue-complete' : 'intro'}
+                    />
+                </div>
+
+                {missionSuccessful && (
                     <>
-                        <AnimalDisplay
-                            animalType={currentMission.animalType}
-                            state="rescued"
-                            animalName={currentMission.animalName}
-                        />
-                        <SunshineDialogue dialogue={sunshineDialogue} type={sunshineDialogueType} />
-                        <h2>Mission Complete!</h2>
                         <StatsDisplay attempts={attempts} targetTime={settings.targetTime} />
                         <div className="sparkles-earned">
                             ✨ Earned {sparkles.earnedThisSession} sparkles this session!
                         </div>
                     </>
-                ) : (
-                    <>
-                        <AnimalDisplay
-                            animalType={currentMission.animalType}
-                            state={currentMission.state}
-                            animalName={currentMission.animalName}
-                        />
-                        <SunshineDialogue
-                            dialogue={`Great effort! ${currentMission.animalName} appreciates your help. Ready to try again?`}
-                            type="intro"
-                        />
-                        <h2>Let's Try Again!</h2>
-                        <p>You made good progress! Keep practicing and you'll get there.</p>
-                    </>
                 )}
+
+                {!missionSuccessful && (
+                    <p>You made good progress! Keep practicing and you'll get there.</p>
+                )}
+
                 <div className="session-actions">
                     <button onClick={startNewMission} className="new-session-button">
                         Help Another Animal
@@ -384,7 +386,13 @@ export function Game() {
                 </button>
             </div>
 
-            {!showFeedback ? (
+            {showMissionIntro ? (
+                <MissionIntro
+                    mission={currentMission}
+                    introDialogue={getMissionIntroDialogue(currentMission)}
+                    onAccept={handleAcceptMission}
+                />
+            ) : !showFeedback ? (
                 <>
                     <AnimalDisplay
                         animalType={currentMission.animalType}
