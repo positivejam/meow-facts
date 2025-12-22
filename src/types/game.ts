@@ -25,6 +25,7 @@ export interface GameSettings {
   operation: Operation;
   maxNumber: number;
   cardsPerSession: number;
+  enabledNumbers: number[]; // Which numbers to include in practice (e.g., [0, 1, 2])
 }
 
 export interface ProblemAttempt {

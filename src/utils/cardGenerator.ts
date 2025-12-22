@@ -1,10 +1,25 @@
 import type { MathFactCard, MathProblem, Operation } from '../types/game';
 
-export function generateAllFacts(operation: Operation, maxNumber: number): MathFactCard[] {
+export function generateAllFacts(
+    operation: Operation,
+    maxNumber: number,
+    enabledNumbers?: number[]
+): MathFactCard[] {
     const cards: MathFactCard[] = [];
+
+    // If no filter specified, enable all numbers
+    const numbersToUse = enabledNumbers && enabledNumbers.length > 0
+        ? enabledNumbers
+        : Array.from({ length: maxNumber + 1 }, (_, i) => i);
 
     for (let operand1 = 0; operand1 <= maxNumber; operand1++) {
         for (let operand2 = 0; operand2 <= maxNumber; operand2++) {
+            // Skip if NEITHER operand is in the enabled set
+            // (we want facts where AT LEAST ONE operand is enabled)
+            if (!numbersToUse.includes(operand1) && !numbersToUse.includes(operand2)) {
+                continue;
+            }
+
             let correctAnswer: number;
 
             switch (operation) {

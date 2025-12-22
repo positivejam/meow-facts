@@ -1,4 +1,4 @@
-import type { MathFactCard, ProblemAttempt } from '../types/game';
+import type { MathFactCard } from '../types/game';
 
 /**
  * Update a card's spaced repetition data based on the attempt

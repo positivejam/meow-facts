@@ -8,14 +8,23 @@ import { ProblemDisplay } from './ProblemDisplay';
 import { AnswerInput } from './AnswerInput';
 import { Feedback } from './Feedback';
 import { StatsDisplay } from './StatsDisplay';
+import { Settings } from './Settings';
 
 const DEFAULT_SETTINGS: GameSettings = {
     operation: 'addition',
     maxNumber: 12,
     cardsPerSession: 10,
+    enabledNumbers: Array.from({ length: 13 }, (_, i) => i), // All numbers 0-12
 };
 
+const SETTINGS_STORAGE_KEY = 'meow-facts-settings';
+
 export function Game() {
+    const [settings, setSettings] = useState<GameSettings>(() => {
+        // Load settings from localStorage
+        const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
+        return stored ? JSON.parse(stored) : DEFAULT_SETTINGS;
+    });
     const [allCards, setAllCards] = useState<MathFactCard[]>([]);
     const [sessionCards, setSessionCards] = useState<MathFactCard[]>([]);
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -25,26 +34,49 @@ export function Game() {
     const [feedbackMessage, setFeedbackMessage] = useState('');
     const [problemStartTime, setProblemStartTime] = useState(Date.now());
     const [sessionComplete, setSessionComplete] = useState(false);
+    const [showSettings, setShowSettings] = useState(false);
 
-    // Initialize cards on mount
+    // Initialize cards when settings change
     useEffect(() => {
         const stored = loadProgress();
 
         if (stored && stored.cards.length > 0) {
-            // Load existing progress
-            setAllCards(stored.cards);
-            const selected = selectCards(stored.cards, DEFAULT_SETTINGS.cardsPerSession);
-            setSessionCards(selected);
+            // Filter existing cards based on enabled numbers
+            // Include cards where AT LEAST ONE operand is in the enabled set
+            const filtered = stored.cards.filter(card =>
+                settings.enabledNumbers.includes(card.problem.operand1) ||
+                settings.enabledNumbers.includes(card.problem.operand2)
+            );
+
+            if (filtered.length > 0) {
+                setAllCards(filtered);
+                const selected = selectCards(filtered, settings.cardsPerSession);
+                setSessionCards(selected);
+            } else {
+                // No matching cards in storage, generate new ones
+                const newCards = generateAllFacts(
+                    settings.operation,
+                    settings.maxNumber,
+                    settings.enabledNumbers
+                );
+                setAllCards(newCards);
+                const selected = selectCards(newCards, settings.cardsPerSession);
+                setSessionCards(selected);
+            }
         } else {
             // Generate new card deck
-            const newCards = generateAllFacts(DEFAULT_SETTINGS.operation, DEFAULT_SETTINGS.maxNumber);
+            const newCards = generateAllFacts(
+                settings.operation,
+                settings.maxNumber,
+                settings.enabledNumbers
+            );
             setAllCards(newCards);
-            const selected = selectCards(newCards, DEFAULT_SETTINGS.cardsPerSession);
+            const selected = selectCards(newCards, settings.cardsPerSession);
             setSessionCards(selected);
         }
 
         setProblemStartTime(Date.now());
-    }, []);
+    }, [settings]);
 
     const handleAnswer = (userAnswer: number) => {
         if (currentCardIndex >= sessionCards.length) return;
@@ -105,13 +137,38 @@ export function Game() {
     };
 
     const handleNewSession = () => {
-        const selected = selectCards(allCards, DEFAULT_SETTINGS.cardsPerSession);
+        const selected = selectCards(allCards, settings.cardsPerSession);
         setSessionCards(selected);
         setCurrentCardIndex(0);
         setAttempts([]);
         setSessionComplete(false);
         setProblemStartTime(Date.now());
     };
+
+    const handleSettingsChange = (newSettings: GameSettings) => {
+        setSettings(newSettings);
+        // Save to localStorage
+        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(newSettings));
+    };
+
+    const handleCloseSettings = () => {
+        setShowSettings(false);
+        // Reset session when closing settings
+        setCurrentCardIndex(0);
+        setAttempts([]);
+        setSessionComplete(false);
+        setProblemStartTime(Date.now());
+    };
+
+    if (showSettings) {
+        return (
+            <Settings
+                settings={settings}
+                onSettingsChange={handleSettingsChange}
+                onClose={handleCloseSettings}
+            />
+        );
+    }
 
     if (allCards.length === 0) {
         return <div className="loading">Loading...</div>;
@@ -125,6 +182,9 @@ export function Game() {
                 <button onClick={handleNewSession} className="new-session-button">
                     Practice More
                 </button>
+                <button onClick={() => setShowSettings(true)} className="settings-link-button">
+                    Change Numbers
+                </button>
             </div>
         );
     }
@@ -137,7 +197,12 @@ export function Game() {
 
     return (
         <div className="game">
-            <h1>Meow Facts</h1>
+            <div className="game-header">
+                <h1>Meow Facts</h1>
+                <button onClick={() => setShowSettings(true)} className="settings-button">
+                    ⚙️
+                </button>
+            </div>
 
             {!showFeedback ? (
                 <>
