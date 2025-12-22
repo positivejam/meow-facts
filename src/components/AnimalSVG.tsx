@@ -45,7 +45,7 @@ function KittenSVG({ progress }: { progress: number }) {
             <ellipse
                 cx="100"
                 cy="110"
-                rx="60"
+                rx="48"
                 ry="50"
                 fill={bodyColor}
                 style={{ transition: 'fill 0.5s ease' }}
@@ -60,20 +60,20 @@ function KittenSVG({ progress }: { progress: number }) {
                 style={{ transition: 'fill 0.5s ease' }}
             />
 
-            {/* Ears */}
+            {/* Ears - very pointy, shorter and higher up */}
             <ellipse
                 cx="70"
-                cy="30"
-                rx="15"
-                ry="25"
+                cy="22"
+                rx="7"
+                ry="20"
                 fill={earColor}
                 style={{ transition: 'fill 0.5s ease' }}
             />
             <ellipse
                 cx="130"
-                cy="30"
-                rx="15"
-                ry="25"
+                cy="22"
+                rx="7"
+                ry="20"
                 fill={earColor}
                 style={{ transition: 'fill 0.5s ease' }}
             />
@@ -81,18 +81,18 @@ function KittenSVG({ progress }: { progress: number }) {
             {/* Inner ears */}
             <ellipse
                 cx="70"
-                cy="32"
-                rx="8"
-                ry="15"
+                cy="24"
+                rx="3"
+                ry="12"
                 fill={noseColor}
                 opacity="0.6"
                 style={{ transition: 'fill 0.5s ease, opacity 0.5s ease' }}
             />
             <ellipse
                 cx="130"
-                cy="32"
-                rx="8"
-                ry="15"
+                cy="24"
+                rx="3"
+                ry="12"
                 fill={noseColor}
                 opacity="0.6"
                 style={{ transition: 'fill 0.5s ease, opacity 0.5s ease' }}
