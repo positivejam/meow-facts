@@ -16,7 +16,6 @@ export function MissionIntro({ mission, introDialogue, onAccept }: MissionIntroP
             <div className="mission-intro-characters">
                 <AnimalDisplay
                     animalType={mission.animalType}
-                    state="needs-help"
                     progress={0}
                     animalName={mission.animalName}
                 />

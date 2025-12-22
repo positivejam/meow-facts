@@ -508,63 +508,6 @@
   margin: 24px 0;
 }
 
-.animal-shape {
-  position: relative;
-  transition: all 0.5s ease;
-}
-
-/* Kitten Shape */
-.animal-kitten {
-  width: 120px;
-  height: 100px;
-  border-radius: 20px;
-  position: relative;
-}
-
-.animal-kitten::before,
-.animal-kitten::after {
-  content: '';
-  position: absolute;
-  top: -12px;
-  width: 0;
-  height: 0;
-  border-left: 12px solid transparent;
-  border-right: 12px solid transparent;
-  border-bottom: 18px solid currentColor;
-  transition: all 0.5s ease;
-}
-
-.animal-kitten::before {
-  left: 15px;
-}
-
-.animal-kitten::after {
-  right: 15px;
-}
-
-/* Animal States */
-.animal-state-needs-help .animal-kitten {
-  background: #888;
-  color: #888;
-  transform: scale(0.9);
-  opacity: 0.7;
-}
-
-.animal-state-improving .animal-kitten {
-  background: #b8a0d6;
-  color: #b8a0d6;
-  transform: scale(1);
-  opacity: 0.9;
-}
-
-.animal-state-rescued .animal-kitten {
-  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-  color: #f093fb;
-  transform: scale(1.1);
-  opacity: 1;
-  box-shadow: 0 4px 20px rgba(240, 147, 251, 0.5);
-}
-
 .animal-name {
   font-size: 1.25rem;
   font-weight: 700;
@@ -836,11 +779,6 @@
   .feedback-animals-container {
     grid-template-columns: 1fr;
     gap: 16px;
-  }
-
-  .animal-kitten {
-    width: 100px;
-    height: 85px;
   }
 
   .sunshine-cat {

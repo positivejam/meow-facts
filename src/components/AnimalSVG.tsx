@@ -26,8 +26,9 @@ function KittenSVG({ progress }: { progress: number }) {
     // Eyes get more open/alert
     const eyeHeight = 8 + (progress * 4); // Eyes open wider
 
-    // Mouth curves up more with progress
-    const mouthCurve = progress * 15; // More smile
+    // Mouth curves up more with progress (bigger smile at higher progress)
+    const mouthCurve = progress * 20; // More pronounced smile
+    const mouthOpacity = 0.7 + (progress * 0.3); // More visible at higher progress
 
     return (
         <svg
@@ -143,22 +144,15 @@ function KittenSVG({ progress }: { progress: number }) {
                 style={{ transition: 'fill 0.5s ease' }}
             />
 
-            {/* Mouth - curves up more with progress */}
+            {/* Mouth - single continuous smile that curves up more with progress */}
             <path
-                d={`M 100 68 Q 95 ${72 + mouthCurve} 90 ${75 + mouthCurve}`}
+                d={`M 85 72 Q 100 ${72 + mouthCurve} 115 72`}
                 stroke="#2d3748"
-                strokeWidth="2"
+                strokeWidth="3"
                 fill="none"
-                opacity="0.6"
-                style={{ transition: 'd 0.5s ease' }}
-            />
-            <path
-                d={`M 100 68 Q 105 ${72 + mouthCurve} 110 ${75 + mouthCurve}`}
-                stroke="#2d3748"
-                strokeWidth="2"
-                fill="none"
-                opacity="0.6"
-                style={{ transition: 'd 0.5s ease' }}
+                opacity={mouthOpacity}
+                strokeLinecap="round"
+                style={{ transition: 'd 0.5s ease, opacity 0.5s ease' }}
             />
 
             {/* Whiskers - more visible as progress increases */}
