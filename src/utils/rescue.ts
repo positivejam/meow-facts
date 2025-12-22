@@ -1,29 +1,21 @@
 import type { AnimalState, RescueMission } from '../types/game';
 
-export function determineAnimalState(
-    correctAnswers: number,
-    fastCorrectAnswers: number
-): AnimalState {
-    // Rescued criteria
-    if (fastCorrectAnswers >= 5 || correctAnswers >= 10) {
+export function getAnimalStateFromProgress(progress: number): AnimalState {
+    if (progress >= 10) {
         return 'rescued';
     }
-
-    // Improving after 3 correct
-    if (correctAnswers >= 3) {
+    if (progress >= 4) {
         return 'improving';
     }
-
     return 'needs-help';
 }
 
 export function isMissionComplete(
-    correctAnswers: number,
-    fastCorrectAnswers: number,
+    progress: number,
     totalAttempts: number
 ): boolean {
-    // Success conditions
-    if (fastCorrectAnswers >= 5 || correctAnswers >= 10) {
+    // Success condition: progress reached 10
+    if (progress >= 10) {
         return true;
     }
 
@@ -35,11 +27,8 @@ export function isMissionComplete(
     return false;
 }
 
-export function isMissionSuccessful(
-    correctAnswers: number,
-    fastCorrectAnswers: number
-): boolean {
-    return fastCorrectAnswers >= 5 || correctAnswers >= 10;
+export function isMissionSuccessful(progress: number): boolean {
+    return progress >= 10;
 }
 
 export function createNewMission(
@@ -53,7 +42,7 @@ export function createNewMission(
         animalPronoun: Math.random() < 0.5 ? 'she' : 'he',
         animalProblem: generateAnimalProblem(),
         location,
-        state: 'needs-help',
+        progress: 0,
         correctAnswers: 0,
         fastCorrectAnswers: 0,
         totalAttempts: 0,

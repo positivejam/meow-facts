@@ -4,7 +4,7 @@ import { generateAllFacts } from '../utils/cardGenerator';
 import { selectCards, updateCard } from '../utils/spacedRepetition';
 import { saveProgress, loadProgress } from '../utils/storage';
 import { determineFeedbackType, type FeedbackType } from '../utils/feedback';
-import { createNewMission, determineAnimalState, isMissionComplete, isMissionSuccessful, getMissionIntroDialogue, getMissionCompleteDialogue } from '../utils/rescue';
+import { createNewMission, isMissionComplete, isMissionSuccessful, getMissionIntroDialogue, getMissionCompleteDialogue } from '../utils/rescue';
 import { getSunshineDialogue } from '../utils/sunshine';
 import { MissionIntro } from './MissionIntro';
 import { loadSparkles, saveSparkles, awardSparkles, SPARKLES_PER_FAST_CORRECT } from '../utils/sparkles';
@@ -132,21 +132,21 @@ export function Game() {
         // Determine if this is a fast+correct answer
         const isFastCorrect = isCorrect && responseTime < settings.targetTime;
 
+        // Calculate progress increment: +2 for fast+correct, +1 for slow+correct, +0 for incorrect
+        const progressIncrement = isFastCorrect ? 2 : (isCorrect ? 1 : 0);
+
         // Update mission progress
         const updatedMission: RescueMission = {
             ...currentMission,
+            progress: Math.min(10, currentMission.progress + progressIncrement),
             correctAnswers: currentMission.correctAnswers + (isCorrect ? 1 : 0),
             fastCorrectAnswers: currentMission.fastCorrectAnswers + (isFastCorrect ? 1 : 0),
             totalAttempts: currentMission.totalAttempts + 1,
             problemsInMission: [...currentMission.problemsInMission, currentCard.problem.id],
-            state: determineAnimalState(
-                currentMission.correctAnswers + (isCorrect ? 1 : 0),
-                currentMission.fastCorrectAnswers + (isFastCorrect ? 1 : 0)
-            ),
         };
 
         // Check if rescue is complete
-        if (isMissionSuccessful(updatedMission.correctAnswers, updatedMission.fastCorrectAnswers)) {
+        if (isMissionSuccessful(updatedMission.progress)) {
             updatedMission.completedAt = Date.now();
         }
 
@@ -212,11 +212,7 @@ export function Game() {
         if (!currentMission) return;
 
         // Check if mission is complete
-        if (isMissionComplete(
-            currentMission.correctAnswers,
-            currentMission.fastCorrectAnswers,
-            currentMission.totalAttempts
-        )) {
+        if (isMissionComplete(currentMission.progress, currentMission.totalAttempts)) {
             // Mission complete - will be handled by render
             return;
         }
@@ -231,10 +227,7 @@ export function Game() {
     const handleMissionComplete = () => {
         if (!currentMission) return;
 
-        const successful = isMissionSuccessful(
-            currentMission.correctAnswers,
-            currentMission.fastCorrectAnswers
-        );
+        const successful = isMissionSuccessful(currentMission.progress);
 
         if (successful) {
             // Save completed mission
@@ -258,11 +251,11 @@ export function Game() {
         // Reset mission attempts but keep the same animal
         const resetMission: RescueMission = {
             ...currentMission,
+            progress: 0,
             correctAnswers: 0,
             fastCorrectAnswers: 0,
             totalAttempts: 0,
             problemsInMission: [],
-            state: 'needs-help',
         };
 
         setCurrentMission(resetMission);
@@ -304,15 +297,11 @@ export function Game() {
 
     // Check if mission is complete
     const missionComplete = isMissionComplete(
-        currentMission.correctAnswers,
-        currentMission.fastCorrectAnswers,
+        currentMission.progress,
         currentMission.totalAttempts
     );
 
-    const missionSuccessful = isMissionSuccessful(
-        currentMission.correctAnswers,
-        currentMission.fastCorrectAnswers
-    );
+    const missionSuccessful = isMissionSuccessful(currentMission.progress);
 
     if (missionComplete) {
         // Call complete handler if not already called
@@ -331,7 +320,7 @@ export function Game() {
                 <div className="mission-complete-characters">
                     <AnimalDisplay
                         animalType={currentMission.animalType}
-                        state={missionSuccessful ? 'rescued' : currentMission.state}
+                        progress={currentMission.progress}
                         animalName={currentMission.animalName}
                     />
                     <SunshineDialogue
@@ -396,7 +385,7 @@ export function Game() {
                 <>
                     <AnimalDisplay
                         animalType={currentMission.animalType}
-                        state={currentMission.state}
+                        progress={currentMission.progress}
                         animalName={currentMission.animalName}
                     />
                     <ProblemDisplay
@@ -411,7 +400,7 @@ export function Game() {
                     <div className="feedback-animals-container">
                         <AnimalDisplay
                             animalType={currentMission.animalType}
-                            state={currentMission.state}
+                            progress={currentMission.progress}
                             animalName={currentMission.animalName}
                         />
                         <SunshineDialogue dialogue={sunshineDialogue} type={sunshineDialogueType} />

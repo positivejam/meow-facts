@@ -71,7 +71,7 @@ export interface RescueMission {
   animalPronoun: 'she' | 'he';
   animalProblem: 'cold' | 'hungry' | 'lonely' | 'tired';
   location: 'living-room';
-  state: AnimalState;
+  progress: number; // 0-10 scale (fast+correct = +2, slow+correct = +1)
   correctAnswers: number;
   fastCorrectAnswers: number;
   totalAttempts: number;

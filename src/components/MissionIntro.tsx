@@ -17,6 +17,7 @@ export function MissionIntro({ mission, introDialogue, onAccept }: MissionIntroP
                 <AnimalDisplay
                     animalType={mission.animalType}
                     state="needs-help"
+                    progress={0}
                     animalName={mission.animalName}
                 />
                 <SunshineDialogue
