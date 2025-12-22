@@ -1,14 +1,21 @@
 import { useState, useEffect } from 'react';
-import type { MathFactCard, GameSettings, ProblemAttempt } from '../types/game';
+import type { MathFactCard, GameSettings, ProblemAttempt, RescueMission, SparklesData, SunshineDialogueType } from '../types/game';
 import { generateAllFacts } from '../utils/cardGenerator';
 import { selectCards, updateCard } from '../utils/spacedRepetition';
 import { saveProgress, loadProgress } from '../utils/storage';
-import { getFeedbackMessage, determineFeedbackType, type FeedbackType } from '../utils/feedback';
+import { determineFeedbackType, type FeedbackType } from '../utils/feedback';
+import { createNewMission, determineAnimalState, isMissionComplete, isMissionSuccessful } from '../utils/rescue';
+import { getSunshineDialogue } from '../utils/sunshine';
+import { loadSparkles, saveSparkles, awardSparkles, SPARKLES_PER_FAST_CORRECT } from '../utils/sparkles';
+import { loadRescueProgress, saveRescueProgress } from '../utils/rescueStorage';
 import { ProblemDisplay } from './ProblemDisplay';
 import { AnswerInput } from './AnswerInput';
 import { Feedback } from './Feedback';
 import { StatsDisplay } from './StatsDisplay';
 import { Settings } from './Settings';
+import { AnimalDisplay } from './AnimalDisplay';
+import { SunshineDialogue } from './SunshineDialogue';
+import { SparklesCounter } from './SparklesCounter';
 
 const DEFAULT_SETTINGS: GameSettings = {
     operation: 'addition',
@@ -32,18 +39,23 @@ export function Game() {
     const [attempts, setAttempts] = useState<ProblemAttempt[]>([]);
     const [showFeedback, setShowFeedback] = useState(false);
     const [feedbackType, setFeedbackType] = useState<FeedbackType>('correct-fast');
-    const [feedbackMessage, setFeedbackMessage] = useState('');
+    // eslint-disable-next-line react-hooks/purity
     const [problemStartTime, setProblemStartTime] = useState(Date.now());
-    const [sessionComplete, setSessionComplete] = useState(false);
     const [showSettings, setShowSettings] = useState(false);
 
-    // Initialize cards when settings change
+    // Rescue game state
+    const [currentMission, setCurrentMission] = useState<RescueMission | null>(null);
+    const [sparkles, setSparkles] = useState<SparklesData>({ total: 0, earnedThisSession: 0 });
+    const [sunshineDialogue, setSunshineDialogue] = useState<string>('');
+    const [sunshineDialogueType, setSunshineDialogueType] = useState<SunshineDialogueType>('intro');
+    const [recentlyEarnedSparkles, setRecentlyEarnedSparkles] = useState(0);
+
+    // Initialize cards and mission when settings change
     useEffect(() => {
         const stored = loadProgress();
 
         if (stored && stored.cards.length > 0) {
             // Filter existing cards based on enabled numbers
-            // Include cards where AT LEAST ONE operand is in the enabled set
             const filtered = stored.cards.filter(card =>
                 settings.enabledNumbers.includes(card.problem.operand1) ||
                 settings.enabledNumbers.includes(card.problem.operand2)
@@ -76,22 +88,88 @@ export function Game() {
             setSessionCards(selected);
         }
 
+        // Load sparkles
+        const loadedSparkles = loadSparkles();
+        setSparkles(loadedSparkles);
+
+        // Start a new mission
+        // eslint-disable-next-line react-hooks/immutability
+        startNewMission();
+
         setProblemStartTime(Date.now());
     }, [settings]);
 
+    const startNewMission = () => {
+        const mission = createNewMission('kitten', 'living-room');
+        setCurrentMission(mission);
+        setCurrentCardIndex(0);
+        setAttempts([]);
+        setShowFeedback(false);
+
+        // Show intro dialogue
+        const intro = getSunshineDialogue('intro');
+        setSunshineDialogue(intro);
+        setSunshineDialogueType('intro');
+
+        // Save mission
+        saveRescueProgress({ currentMission: mission });
+    };
+
     const handleAnswer = (userAnswer: number) => {
-        if (currentCardIndex >= sessionCards.length) return;
+        if (currentCardIndex >= sessionCards.length || !currentMission) return;
 
         const currentCard = sessionCards[currentCardIndex];
         const responseTime = Date.now() - problemStartTime;
         const isCorrect = userAnswer === currentCard.problem.correctAnswer;
 
-        // Determine feedback type and get message
+        // Determine feedback type
         const fbType = determineFeedbackType(isCorrect, responseTime, settings.targetTime);
         setFeedbackType(fbType);
-        setFeedbackMessage(
-            getFeedbackMessage(fbType, currentCard.problem.correctAnswer)
-        );
+
+        // Determine if this is a fast+correct answer
+        const isFastCorrect = isCorrect && responseTime < settings.targetTime;
+
+        // Update mission progress
+        const updatedMission: RescueMission = {
+            ...currentMission,
+            correctAnswers: currentMission.correctAnswers + (isCorrect ? 1 : 0),
+            fastCorrectAnswers: currentMission.fastCorrectAnswers + (isFastCorrect ? 1 : 0),
+            totalAttempts: currentMission.totalAttempts + 1,
+            problemsInMission: [...currentMission.problemsInMission, currentCard.problem.id],
+            state: determineAnimalState(
+                currentMission.correctAnswers + (isCorrect ? 1 : 0),
+                currentMission.fastCorrectAnswers + (isFastCorrect ? 1 : 0)
+            ),
+        };
+
+        // Check if rescue is complete
+        if (isMissionSuccessful(updatedMission.correctAnswers, updatedMission.fastCorrectAnswers)) {
+            updatedMission.completedAt = Date.now();
+        }
+
+        setCurrentMission(updatedMission);
+
+        // Award sparkles for fast+correct answers
+        if (isFastCorrect) {
+            const newSparkles = awardSparkles(sparkles, SPARKLES_PER_FAST_CORRECT);
+            setSparkles(newSparkles);
+            saveSparkles(newSparkles);
+            setRecentlyEarnedSparkles(SPARKLES_PER_FAST_CORRECT);
+        } else {
+            setRecentlyEarnedSparkles(0);
+        }
+
+        // Select appropriate Sunshine dialogue
+        let dialogueType: SunshineDialogueType;
+        if (!isCorrect) {
+            dialogueType = 'incorrect';
+        } else if (isFastCorrect) {
+            dialogueType = 'fast-correct';
+        } else {
+            dialogueType = 'slow-correct';
+        }
+        setSunshineDialogueType(dialogueType);
+        setSunshineDialogue(getSunshineDialogue(dialogueType, currentCard.problem.correctAnswer));
 
         // Record the attempt
         const attempt: ProblemAttempt = {
@@ -103,7 +181,7 @@ export function Game() {
         };
         setAttempts([...attempts, attempt]);
 
-        // Update the card with spaced repetition
+        // Update the card with spaced repetition (existing SM-2 logic)
         const updatedCard = updateCard(currentCard, isCorrect, responseTime, settings.targetTime);
 
         // Update all cards
@@ -119,6 +197,7 @@ export function Game() {
 
         // Save progress
         saveProgress(updatedAllCards, []);
+        saveRescueProgress({ currentMission: updatedMission });
 
         // Show feedback
         setShowFeedback(true);
@@ -127,38 +206,86 @@ export function Game() {
     const handleContinue = () => {
         setShowFeedback(false);
 
-        if (currentCardIndex + 1 >= sessionCards.length) {
-            // Session complete
-            setSessionComplete(true);
-        } else {
-            // Move to next card
+        if (!currentMission) return;
+
+        // Check if mission is complete
+        if (isMissionComplete(
+            currentMission.correctAnswers,
+            currentMission.fastCorrectAnswers,
+            currentMission.totalAttempts
+        )) {
+            // Mission complete - will be handled by render
+            return;
+        }
+
+        // Move to next card
+        if (currentCardIndex + 1 < sessionCards.length) {
             setCurrentCardIndex(currentCardIndex + 1);
             setProblemStartTime(Date.now());
         }
     };
 
-    const handleNewSession = () => {
+    const handleMissionComplete = () => {
+        if (!currentMission) return;
+
+        const successful = isMissionSuccessful(
+            currentMission.correctAnswers,
+            currentMission.fastCorrectAnswers
+        );
+
+        if (successful) {
+            // Save completed mission
+            const rescueData = loadRescueProgress();
+            saveRescueProgress({
+                completedMissions: [...rescueData.completedMissions, currentMission],
+                currentMission: null,
+            });
+        }
+
+        // Show appropriate dialogue
+        if (successful) {
+            setSunshineDialogueType('rescue-complete');
+            setSunshineDialogue(getSunshineDialogue('rescue-complete'));
+        }
+    };
+
+    const handleRetryMission = () => {
+        if (!currentMission) return;
+
+        // Reset mission attempts but keep the same animal
+        const resetMission: RescueMission = {
+            ...currentMission,
+            correctAnswers: 0,
+            fastCorrectAnswers: 0,
+            totalAttempts: 0,
+            problemsInMission: [],
+            state: 'needs-help',
+        };
+
+        setCurrentMission(resetMission);
+        saveRescueProgress({ currentMission: resetMission });
+
+        // Restart session
         const selected = selectCards(allCards, settings.cardsPerSession);
         setSessionCards(selected);
         setCurrentCardIndex(0);
         setAttempts([]);
-        setSessionComplete(false);
+        setShowFeedback(false);
         setProblemStartTime(Date.now());
+
+        // Show encouraging intro
+        setSunshineDialogueType('intro');
+        setSunshineDialogue(getSunshineDialogue('intro'));
     };
 
     const handleSettingsChange = (newSettings: GameSettings) => {
         setSettings(newSettings);
-        // Save to localStorage
         localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(newSettings));
     };
 
     const handleCloseSettings = () => {
         setShowSettings(false);
-        // Reset session when closing settings
-        setCurrentCardIndex(0);
-        setAttempts([]);
-        setSessionComplete(false);
-        setProblemStartTime(Date.now());
+        // Settings change will trigger useEffect to reset session
     };
 
     if (showSettings) {
@@ -171,19 +298,68 @@ export function Game() {
         );
     }
 
-    if (allCards.length === 0) {
+    if (allCards.length === 0 || !currentMission) {
         return <div className="loading">Loading...</div>;
     }
 
-    if (sessionComplete) {
+    // Check if mission is complete
+    const missionComplete = isMissionComplete(
+        currentMission.correctAnswers,
+        currentMission.fastCorrectAnswers,
+        currentMission.totalAttempts
+    );
+
+    const missionSuccessful = isMissionSuccessful(
+        currentMission.correctAnswers,
+        currentMission.fastCorrectAnswers
+    );
+
+    if (missionComplete) {
+        // Call complete handler if not already called
+        if (missionSuccessful && !currentMission.completedAt) {
+            handleMissionComplete();
+        }
+
         return (
             <div className="session-complete">
-                <h2>Great job!</h2>
-                <StatsDisplay attempts={attempts} targetTime={settings.targetTime} />
+                {missionSuccessful ? (
+                    <>
+                        <AnimalDisplay
+                            animalType={currentMission.animalType}
+                            state="rescued"
+                            animalName={currentMission.animalName}
+                        />
+                        <SunshineDialogue dialogue={sunshineDialogue} type={sunshineDialogueType} />
+                        <h2>Mission Complete!</h2>
+                        <StatsDisplay attempts={attempts} targetTime={settings.targetTime} />
+                        <div className="sparkles-earned">
+                            ✨ Earned {sparkles.earnedThisSession} sparkles this session!
+                        </div>
+                    </>
+                ) : (
+                    <>
+                        <AnimalDisplay
+                            animalType={currentMission.animalType}
+                            state={currentMission.state}
+                            animalName={currentMission.animalName}
+                        />
+                        <SunshineDialogue
+                            dialogue={`Great effort! ${currentMission.animalName} appreciates your help. Ready to try again?`}
+                            type="intro"
+                        />
+                        <h2>Let's Try Again!</h2>
+                        <p>You made good progress! Keep practicing and you'll get there.</p>
+                    </>
+                )}
                 <div className="session-actions">
-                    <button onClick={handleNewSession} className="new-session-button">
-                        Practice More
+                    <button onClick={startNewMission} className="new-session-button">
+                        Help Another Animal
                     </button>
+                    {!missionSuccessful && (
+                        <button onClick={handleRetryMission} className="retry-button">
+                            Try with {currentMission.animalName} Again
+                        </button>
+                    )}
                     <button onClick={() => setShowSettings(true)} className="settings-link-button">
                         Change Numbers
                     </button>
@@ -202,6 +378,7 @@ export function Game() {
         <div className="game">
             <div className="game-header">
                 <h1>Meow Facts</h1>
+                <SparklesCounter sparkles={sparkles.total} recentlyEarned={recentlyEarnedSparkles} />
                 <button onClick={() => setShowSettings(true)} className="settings-button">
                     ⚙️
                 </button>
@@ -209,6 +386,11 @@ export function Game() {
 
             {!showFeedback ? (
                 <>
+                    <AnimalDisplay
+                        animalType={currentMission.animalType}
+                        state={currentMission.state}
+                        animalName={currentMission.animalName}
+                    />
                     <ProblemDisplay
                         problem={currentCard.problem}
                         problemNumber={currentCardIndex + 1}
@@ -217,11 +399,20 @@ export function Game() {
                     <AnswerInput onSubmit={handleAnswer} />
                 </>
             ) : (
-                <Feedback
-                    feedbackType={feedbackType}
-                    message={feedbackMessage}
-                    onContinue={handleContinue}
-                />
+                <>
+                    <div className="feedback-animals-container">
+                        <AnimalDisplay
+                            animalType={currentMission.animalType}
+                            state={currentMission.state}
+                            animalName={currentMission.animalName}
+                        />
+                        <SunshineDialogue dialogue={sunshineDialogue} type={sunshineDialogueType} />
+                    </div>
+                    <Feedback
+                        feedbackType={feedbackType}
+                        onContinue={handleContinue}
+                    />
+                </>
             )}
         </div>
     );

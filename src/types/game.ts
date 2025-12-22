@@ -60,3 +60,38 @@ export interface ProgressData {
   sessions: GameSession[];
   lastUpdated: number;
 }
+
+// Rescue Game Types
+export type AnimalState = 'needs-help' | 'improving' | 'rescued';
+
+export interface RescueMission {
+  id: string;
+  animalType: 'kitten' | 'puppy' | 'snail';
+  animalName: string;
+  location: 'living-room';
+  state: AnimalState;
+  correctAnswers: number;
+  fastCorrectAnswers: number;
+  totalAttempts: number;
+  problemsInMission: string[];
+  startTime: number;
+  completedAt?: number;
+}
+
+export interface SparklesData {
+  total: number;
+  earnedThisSession: number;
+}
+
+export type SunshineDialogueType = 'intro' | 'fast-correct' | 'slow-correct' | 'incorrect' | 'rescue-complete';
+
+export interface SunshineDialogue {
+  type: SunshineDialogueType;
+  text: string;
+}
+
+export interface UnlockStatus {
+  unlockedAnimalTypes: string[];
+  unlockedLocations: string[];
+  masteredFactGroups: string[];
+}
