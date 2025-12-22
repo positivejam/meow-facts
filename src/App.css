@@ -1,11 +1,13 @@
 .app {
   min-height: 100vh;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   padding: 20px;
+  box-sizing: border-box;
 }
 
 .game {
@@ -15,7 +17,9 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
   max-width: 600px;
   width: 100%;
+  min-width: 300px;
   text-align: center;
+  box-sizing: border-box;
 }
 
 .game h1 {
@@ -168,6 +172,8 @@
 /* Session Complete */
 .session-complete {
   text-align: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .session-complete h2 {
@@ -489,8 +495,13 @@
 
 /* Responsive */
 @media (max-width: 640px) {
+  .app {
+    padding: 12px;
+  }
+
   .game {
     padding: 24px;
+    min-width: 280px;
   }
 
   .game h1 {
@@ -521,5 +532,20 @@
 
   .checkbox-grid {
     grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+  }
+}
+
+@media (max-width: 400px) {
+  .app {
+    padding: 8px;
+  }
+
+  .game {
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .problem-text {
+    font-size: 2.5rem;
   }
 }
