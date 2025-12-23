@@ -105,7 +105,7 @@ export function Settings({ settings, onSettingsChange, onClose }: SettingsProps)
                             type="range"
                             min="2"
                             max="10"
-                            step="0.5"
+                            step="1"
                             value={targetTimeSeconds}
                             onChange={(e) => handleTargetTimeChange(Number(e.target.value))}
                             className="time-slider"
