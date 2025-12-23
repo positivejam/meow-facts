@@ -52,6 +52,32 @@ function KittenSVG({ progress }: { progress: number }) {
                 style={{ transition: `fill ${animationTime} ease` }}
             />
 
+            {/* Ears - triangular and pointy, behind the head */}
+            <polygon
+                points="75,8 67,32 83,32"
+                fill={earColor}
+                style={{ transition: `fill ${animationTime} ease` }}
+            />
+            <polygon
+                points="125,8 117,32 133,32"
+                fill={earColor}
+                style={{ transition: `fill ${animationTime} ease` }}
+            />
+
+            {/* Inner ears - smaller triangles */}
+            <polygon
+                points="75,14 71,28 79,28"
+                fill={noseColor}
+                opacity="0.6"
+                style={{ transition: `fill ${animationTime} ease, opacity ${animationTime} ease` }}
+            />
+            <polygon
+                points="125,14 121,28 129,28"
+                fill={noseColor}
+                opacity="0.6"
+                style={{ transition: `fill ${animationTime} ease, opacity ${animationTime} ease` }}
+            />
+
             {/* Head */}
             <circle
                 cx="100"
@@ -59,44 +85,6 @@ function KittenSVG({ progress }: { progress: number }) {
                 r="45"
                 fill={bodyColor}
                 style={{ transition: `fill ${animationTime} ease` }}
-            />
-
-            {/* Ears - very pointy, shorter and higher up */}
-            <ellipse
-                cx="70"
-                cy="22"
-                rx="7"
-                ry="20"
-                fill={earColor}
-                style={{ transition: `fill ${animationTime} ease` }}
-            />
-            <ellipse
-                cx="130"
-                cy="22"
-                rx="7"
-                ry="20"
-                fill={earColor}
-                style={{ transition: `fill ${animationTime} ease` }}
-            />
-
-            {/* Inner ears */}
-            <ellipse
-                cx="70"
-                cy="24"
-                rx="3"
-                ry="12"
-                fill={noseColor}
-                opacity="0.6"
-                style={{ transition: `fill ${animationTime} ease, opacity ${animationTime} ease` }}
-            />
-            <ellipse
-                cx="130"
-                cy="24"
-                rx="3"
-                ry="12"
-                fill={noseColor}
-                opacity="0.6"
-                style={{ transition: `fill ${animationTime} ease, opacity ${animationTime} ease` }}
             />
 
             {/* Eyes */}
