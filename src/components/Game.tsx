@@ -321,46 +321,48 @@ export function Game() {
             : `Great effort! ${currentMission.animalName} appreciates your help. Ready to try again?`;
 
         return (
-            <div className="session-complete">
-                <h2>{missionSuccessful ? 'Mission Complete!' : "Let's Try Again!"}</h2>
+            <div className="game">
+                <div className="session-complete">
+                    <h2>{missionSuccessful ? 'Mission Complete!' : "Let's Try Again!"}</h2>
 
-                <div className="mission-complete-characters">
-                    <div className={`sunshine-dialogue dialogue-${missionSuccessful ? 'rescue-complete' : 'intro'}`}>
-                        {completeDialogue}
-                    </div>
-                    <AnimalDisplay
-                        animalType={currentMission.animalType}
-                        progress={currentMission.progress}
-                        animalName={currentMission.animalName}
-                    />
-                    <SunshineSVG />
-                </div>
-
-                {missionSuccessful && (
-                    <>
-                        <StatsDisplay attempts={attempts} targetTime={settings.targetTime} />
-                        <div className="sparkles-earned">
-                            ✨ Earned {sparkles.earnedThisSession} sparkles this session!
+                    <div className="mission-complete-characters">
+                        <div className={`sunshine-dialogue dialogue-${missionSuccessful ? 'rescue-complete' : 'intro'}`}>
+                            {completeDialogue}
                         </div>
-                    </>
-                )}
+                        <AnimalDisplay
+                            animalType={currentMission.animalType}
+                            progress={currentMission.progress}
+                            animalName={currentMission.animalName}
+                        />
+                        <SunshineSVG />
+                    </div>
 
-                {!missionSuccessful && (
-                    <p>You made good progress! Keep practicing and you'll get there.</p>
-                )}
-
-                <div className="session-actions">
-                    <button onClick={startNewMission} className="new-session-button">
-                        Help Another Animal
-                    </button>
-                    {!missionSuccessful && (
-                        <button onClick={handleRetryMission} className="retry-button">
-                            Try with {currentMission.animalName} Again
-                        </button>
+                    {missionSuccessful && (
+                        <>
+                            <StatsDisplay attempts={attempts} targetTime={settings.targetTime} />
+                            <div className="sparkles-earned">
+                                ✨ Earned {sparkles.earnedThisSession} sparkles this session!
+                            </div>
+                        </>
                     )}
-                    <button onClick={() => setShowSettings(true)} className="settings-link-button">
-                        Settings
-                    </button>
+
+                    {!missionSuccessful && (
+                        <p>You made good progress! Keep practicing and you'll get there.</p>
+                    )}
+
+                    <div className="session-actions">
+                        <button onClick={startNewMission} className="new-session-button">
+                            Help Another Animal
+                        </button>
+                        {!missionSuccessful && (
+                            <button onClick={handleRetryMission} className="retry-button">
+                                Try with {currentMission.animalName} Again
+                            </button>
+                        )}
+                        <button onClick={() => setShowSettings(true)} className="settings-link-button">
+                            Settings
+                        </button>
+                    </div>
                 </div>
             </div>
         );
