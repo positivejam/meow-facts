@@ -97,8 +97,6 @@ export function Game() {
         // Start a new mission
         // eslint-disable-next-line react-hooks/immutability
         startNewMission();
-
-        setProblemStartTime(Date.now());
     }, [settings]);
 
     const startNewMission = () => {
