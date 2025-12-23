@@ -100,9 +100,17 @@ export function Game() {
         startNewMission();
     }, [settings]);
 
-    const startNewMission = () => {
+    const startNewMission = (selectNewCards = false) => {
         const mission = createNewMission('kitten', 'living-room');
         setCurrentMission(mission);
+
+        // Select new cards only when starting a new mission after completing one
+        // (not on initial load, since useEffect already selects cards)
+        if (selectNewCards) {
+            const selected = selectCards(allCards, settings.cardsPerSession);
+            setSessionCards(selected);
+        }
+
         setCurrentCardIndex(0);
         setAttempts([]);
         setShowFeedback(false);
@@ -222,11 +230,10 @@ export function Game() {
             return;
         }
 
-        // Move to next card
-        if (currentCardIndex + 1 < sessionCards.length) {
-            setCurrentCardIndex(currentCardIndex + 1);
-            setProblemStartTime(Date.now());
-        }
+        // Move to next card (loop back to start if at end)
+        const nextIndex = (currentCardIndex + 1) % sessionCards.length;
+        setCurrentCardIndex(nextIndex);
+        setProblemStartTime(Date.now());
     };
 
     const handleMissionComplete = () => {
@@ -347,7 +354,7 @@ export function Game() {
                     )}
 
                     <div className="session-actions">
-                        <button onClick={startNewMission} className="new-session-button">
+                        <button onClick={() => startNewMission(true)} className="new-session-button">
                             Help Another Animal
                         </button>
                         {!missionSuccessful && (
