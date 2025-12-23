@@ -518,22 +518,6 @@
     position: relative;
 }
 
-.animal-container-animated {
-    animation: celebrationPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-@keyframes celebrationPop {
-    0% {
-        transform: scale(1);
-    }
-    50% {
-        transform: scale(1.15);
-    }
-    100% {
-        transform: scale(1);
-    }
-}
-
 .celebration-sparkles {
     position: absolute;
     top: 50%;
@@ -547,31 +531,31 @@
 .sparkle {
     position: absolute;
     font-size: 2rem;
-    animation: sparkleFloat 0.8s ease-out forwards;
+    animation: sparkleFloat 1.0s ease-out forwards;
 }
 
 .sparkle-1 {
-    top: 0%;
+    top: 20%;
     left: 50%;
-    animation-delay: 0s;
+    animation-delay: 0.3s;
 }
 
 .sparkle-2 {
     top: 50%;
-    left: 100%;
-    animation-delay: 0.1s;
+    left: 80%;
+    animation-delay: 0.4s;
 }
 
 .sparkle-3 {
-    top: 100%;
+    top: 80%;
     left: 50%;
-    animation-delay: 0.2s;
+    animation-delay: 0.5s;
 }
 
 .sparkle-4 {
     top: 50%;
-    left: 0%;
-    animation-delay: 0.15s;
+    left: 20%;
+    animation-delay: 0.3s;
 }
 
 @keyframes sparkleFloat {
@@ -579,10 +563,12 @@
         opacity: 0;
         transform: translate(-50%, -50%) scale(0.5);
     }
+
     50% {
         opacity: 1;
         transform: translate(-50%, -50%) scale(1.2);
     }
+
     100% {
         opacity: 0;
         transform: translate(-50%, -50%) translateY(-30px) scale(0.8);

@@ -17,7 +17,7 @@ export function AnimalDisplay({ animalType, progress, animalName, animate = fals
 
     return (
         <div className={`animal-display animal-state-${state}`}>
-            <div className={`animal-container ${animate ? 'animal-container-animated' : ''}`}>
+            <div className="animal-container">
                 <AnimalSVG animalType={animalType} progress={svgProgress} />
                 {animate && progress > 0 && (
                     <div className="celebration-sparkles">
