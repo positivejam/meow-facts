@@ -205,10 +205,10 @@ export function Game() {
         // Show feedback, then animate progress change
         setShowFeedback(true);
 
-        // Animate progress after a short delay so user sees the transformation
+        // Animate progress after celebration completes (600ms pop animation)
         setTimeout(() => {
             setDisplayedProgress(updatedMission.progress);
-        }, 400);
+        }, 600);
     };
 
     const handleContinue = () => {
