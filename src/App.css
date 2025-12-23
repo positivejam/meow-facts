@@ -539,6 +539,7 @@
     grid-column-end: 3;
     justify-self: right;
     animation: fadeIn 0.3s ease;
+    white-space: pre-line;
 }
 
 /* Thought bubble circles connecting to Sunshine */

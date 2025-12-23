@@ -20,10 +20,10 @@ export const SUNSHINE_PHRASES = {
         "Well done! Keep going!",
     ],
     incorrect: [
-        "Oops! {equation}. Let's keep helping!",
-        "No worries! {equation}. You're doing great!",
-        "It happens! {equation}. The kitten is still happy you're here!",
-        "That one was tricky! {equation}. You've got this!",
+        "Oops!\n{equation}\nLet's keep helping!",
+        "No worries!\n{equation}\nYou're doing great!",
+        "Ah, chicken nugget!\n{equation}\nThe kitten is still happy you're here!",
+        "That one was tricky!\n{equation}\nYou've got this!",
     ],
     'rescue-complete': [
         "You did it! The kitten is cozy and happy!",
