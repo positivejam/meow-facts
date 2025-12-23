@@ -523,34 +523,6 @@
   margin: 24px 0;
 }
 
-.sunshine-cat {
-  width: 80px;
-  height: 80px;
-  background: #1a1a1a;
-  border-radius: 50%;
-  position: relative;
-}
-
-.sunshine-cat::before,
-.sunshine-cat::after {
-  content: '';
-  position: absolute;
-  top: -8px;
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-bottom: 15px solid #1a1a1a;
-}
-
-.sunshine-cat::before {
-  left: 15px;
-}
-
-.sunshine-cat::after {
-  right: 15px;
-}
-
 .sunshine-dialogue {
   background: white;
   padding: 16px 24px;
@@ -779,11 +751,6 @@
   .feedback-animals-container {
     grid-template-columns: 1fr;
     gap: 16px;
-  }
-
-  .sunshine-cat {
-    width: 70px;
-    height: 70px;
   }
 
   .sunshine-dialogue {

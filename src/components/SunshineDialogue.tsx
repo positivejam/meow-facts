@@ -1,4 +1,5 @@
 import type { SunshineDialogueType } from '../types/game';
+import { SunshineSVG } from './SunshineSVG';
 
 interface SunshineDialogueProps {
     dialogue: string;
@@ -8,7 +9,7 @@ interface SunshineDialogueProps {
 export function SunshineDialogue({ dialogue, type }: SunshineDialogueProps) {
     return (
         <div className="sunshine-container">
-            <div className="sunshine-cat"></div>
+            <SunshineSVG />
             <div className={`sunshine-dialogue dialogue-${type}`}>
                 {dialogue}
             </div>
