@@ -583,7 +583,19 @@
     background: #f8f9ff;
 }
 
+.dialogue-intro::before,
+.dialogue-intro::after {
+    border-color: #667eea;
+    background: #f8f9ff;
+}
+
 .dialogue-fast-correct {
+    border-color: #38ef7d;
+    background: #f0fff4;
+}
+
+.dialogue-fast-correct::before,
+.dialogue-fast-correct::after {
     border-color: #38ef7d;
     background: #f0fff4;
 }
@@ -593,12 +605,30 @@
     background: #fff5f7;
 }
 
+.dialogue-slow-correct::before,
+.dialogue-slow-correct::after {
+    border-color: #f5576c;
+    background: #fff5f7;
+}
+
 .dialogue-incorrect {
     border-color: #fee140;
     background: #fffbf0;
 }
 
+.dialogue-incorrect::before,
+.dialogue-incorrect::after {
+    border-color: #fee140;
+    background: #fffbf0;
+}
+
 .dialogue-rescue-complete {
+    border-color: #f093fb;
+    background: #fff0fd;
+}
+
+.dialogue-rescue-complete::before,
+.dialogue-rescue-complete::after {
     border-color: #f093fb;
     background: #fff0fd;
 }
