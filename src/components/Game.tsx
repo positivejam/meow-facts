@@ -409,6 +409,7 @@ export function Game() {
                         animalType={currentMission.animalType}
                         animalProgress={displayedProgress}
                         animalName={currentMission.animalName}
+                        animate={feedbackType === 'correct-fast'}
                     />
                     <Feedback
                         feedbackType={feedbackType}

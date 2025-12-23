@@ -9,6 +9,7 @@ interface SunshineSceneProps {
     animalType: AnimalType;
     animalProgress: number;
     animalName: string;
+    animate?: boolean; // Whether to show celebration animation on the animal
 }
 
 export function SunshineScene({
@@ -18,6 +19,7 @@ export function SunshineScene({
     animalType,
     animalProgress,
     animalName,
+    animate = false,
 }: SunshineSceneProps) {
     return (
         <div className={containerClassName}>
@@ -28,6 +30,7 @@ export function SunshineScene({
                 animalType={animalType}
                 progress={animalProgress}
                 animalName={animalName}
+                animate={animate}
             />
             <SunshineSVG />
         </div>

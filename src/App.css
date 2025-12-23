@@ -514,6 +514,81 @@
     color: #667eea;
 }
 
+.animal-container {
+    position: relative;
+}
+
+.animal-container-animated {
+    animation: celebrationPop 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes celebrationPop {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.15);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+.celebration-sparkles {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
+    width: 100%;
+    height: 100%;
+}
+
+.sparkle {
+    position: absolute;
+    font-size: 2rem;
+    animation: sparkleFloat 0.8s ease-out forwards;
+}
+
+.sparkle-1 {
+    top: 0%;
+    left: 50%;
+    animation-delay: 0s;
+}
+
+.sparkle-2 {
+    top: 50%;
+    left: 100%;
+    animation-delay: 0.1s;
+}
+
+.sparkle-3 {
+    top: 100%;
+    left: 50%;
+    animation-delay: 0.2s;
+}
+
+.sparkle-4 {
+    top: 50%;
+    left: 0%;
+    animation-delay: 0.15s;
+}
+
+@keyframes sparkleFloat {
+    0% {
+        opacity: 0;
+        transform: translate(-50%, -50%) scale(0.5);
+    }
+    50% {
+        opacity: 1;
+        transform: translate(-50%, -50%) scale(1.2);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50%, -50%) translateY(-30px) scale(0.8);
+    }
+}
+
 /* Sunshine Dialogue */
 .sunshine-container {
     display: flex;
