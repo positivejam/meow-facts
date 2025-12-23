@@ -15,7 +15,8 @@ import { Feedback } from './Feedback';
 import { StatsDisplay } from './StatsDisplay';
 import { Settings } from './Settings';
 import { AnimalDisplay } from './AnimalDisplay';
-import { SunshineDialogue } from './SunshineDialogue';
+// import { SunshineDialogue } from './SunshineDialogue';
+import { SunshineSVG } from './SunshineSVG';
 import { SparklesCounter } from './SparklesCounter';
 
 const DEFAULT_SETTINGS: GameSettings = {
@@ -324,15 +325,15 @@ export function Game() {
                 <h2>{missionSuccessful ? 'Mission Complete!' : "Let's Try Again!"}</h2>
 
                 <div className="mission-complete-characters">
+                    <div className={`sunshine-dialogue dialogue-${missionSuccessful ? 'rescue-complete' : 'intro'}`}>
+                        {completeDialogue}
+                    </div>
                     <AnimalDisplay
                         animalType={currentMission.animalType}
                         progress={currentMission.progress}
                         animalName={currentMission.animalName}
                     />
-                    <SunshineDialogue
-                        dialogue={completeDialogue}
-                        type={missionSuccessful ? 'rescue-complete' : 'intro'}
-                    />
+                    <SunshineSVG />
                 </div>
 
                 {missionSuccessful && (
@@ -404,12 +405,15 @@ export function Game() {
             ) : (
                 <>
                     <div className="feedback-animals-container">
+                        <div className={`sunshine-dialogue dialogue-${sunshineDialogueType}`}>
+                            {sunshineDialogue}
+                        </div>
                         <AnimalDisplay
                             animalType={currentMission.animalType}
                             progress={displayedProgress}
                             animalName={currentMission.animalName}
                         />
-                        <SunshineDialogue dialogue={sunshineDialogue} type={sunshineDialogueType} />
+                        <SunshineSVG />
                     </div>
                     <Feedback
                         feedbackType={feedbackType}
