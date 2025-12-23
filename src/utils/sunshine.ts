@@ -1,4 +1,4 @@
-import type { SunshineDialogueType } from '../types/game';
+import type { SunshineDialogueType, MathProblem, Operation } from '../types/game';
 
 export const SUNSHINE_PHRASES = {
     intro: [
@@ -20,10 +20,10 @@ export const SUNSHINE_PHRASES = {
         "Well done! Keep going!",
     ],
     incorrect: [
-        "That's okay! It's {answer}. Let's keep helping!",
-        "No worries! The answer is {answer}. You're doing great!",
-        "It happens! It's {answer}. The kitten is still happy you're here!",
-        "That one was tricky! It's {answer}. You've got this!",
+        "Oops! {equation}. Let's keep helping!",
+        "No worries! {equation}. You're doing great!",
+        "It happens! {equation}. The kitten is still happy you're here!",
+        "That one was tricky! {equation}. You've got this!",
     ],
     'rescue-complete': [
         "You did it! The kitten is cozy and happy!",
@@ -33,15 +33,30 @@ export const SUNSHINE_PHRASES = {
     ],
 } as const;
 
+function getOperationSymbol(operation: Operation): string {
+    switch (operation) {
+        case 'addition': return '+';
+        case 'subtraction': return '−';
+        case 'multiplication': return '×';
+        case 'division': return '÷';
+    }
+}
+
+function formatProblemEquation(problem: MathProblem): string {
+    const symbol = getOperationSymbol(problem.operation);
+    return `${problem.operand1} ${symbol} ${problem.operand2} = ${problem.correctAnswer}`;
+}
+
 export function getSunshineDialogue(
     type: SunshineDialogueType,
-    correctAnswer?: number
+    problem?: MathProblem
 ): string {
     const phrases = SUNSHINE_PHRASES[type];
     const phrase = phrases[Math.floor(Math.random() * phrases.length)];
 
-    if (type === 'incorrect' && correctAnswer !== undefined) {
-        return phrase.replace('{answer}', correctAnswer.toString());
+    if (type === 'incorrect' && problem !== undefined) {
+        const equation = formatProblemEquation(problem);
+        return phrase.replace('{equation}', equation);
     }
 
     return phrase;

@@ -172,7 +172,7 @@ export function Game() {
             dialogueType = 'slow-correct';
         }
         setSunshineDialogueType(dialogueType);
-        setSunshineDialogue(getSunshineDialogue(dialogueType, currentCard.problem.correctAnswer));
+        setSunshineDialogue(getSunshineDialogue(dialogueType, currentCard.problem));
 
         // Record the attempt
         const attempt: ProblemAttempt = {
