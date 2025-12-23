@@ -12,6 +12,7 @@ export function AnimalSVG({ animalType, progress }: AnimalSVGProps) {
 }
 
 function KittenSVG({ progress }: { progress: number }) {
+    const animationTime = '4.0s';
     // Calculate visual properties based on progress
     const opacity = 0.5 + (progress * 0.5); // 0.5 → 1.0
     const saturation = 50 + (progress * 50); // 50% → 100%
@@ -38,7 +39,7 @@ function KittenSVG({ progress }: { progress: number }) {
             style={{
                 opacity,
                 transform: `scale(${scale})`,
-                transition: 'all 0.5s ease',
+                transition: `all ${animationTime} ease`,
             }}
         >
             {/* Body */}
@@ -48,7 +49,7 @@ function KittenSVG({ progress }: { progress: number }) {
                 rx="48"
                 ry="50"
                 fill={bodyColor}
-                style={{ transition: 'fill 0.5s ease' }}
+                style={{ transition: `fill ${animationTime} ease` }}
             />
 
             {/* Head */}
@@ -57,7 +58,7 @@ function KittenSVG({ progress }: { progress: number }) {
                 cy="60"
                 r="45"
                 fill={bodyColor}
-                style={{ transition: 'fill 0.5s ease' }}
+                style={{ transition: `fill ${animationTime} ease` }}
             />
 
             {/* Ears - very pointy, shorter and higher up */}
@@ -67,7 +68,7 @@ function KittenSVG({ progress }: { progress: number }) {
                 rx="7"
                 ry="20"
                 fill={earColor}
-                style={{ transition: 'fill 0.5s ease' }}
+                style={{ transition: `fill ${animationTime} ease` }}
             />
             <ellipse
                 cx="130"
@@ -75,7 +76,7 @@ function KittenSVG({ progress }: { progress: number }) {
                 rx="7"
                 ry="20"
                 fill={earColor}
-                style={{ transition: 'fill 0.5s ease' }}
+                style={{ transition: `fill ${animationTime} ease` }}
             />
 
             {/* Inner ears */}
@@ -86,7 +87,7 @@ function KittenSVG({ progress }: { progress: number }) {
                 ry="12"
                 fill={noseColor}
                 opacity="0.6"
-                style={{ transition: 'fill 0.5s ease, opacity 0.5s ease' }}
+                style={{ transition: `fill ${animationTime} ease, opacity ${animationTime} ease` }}
             />
             <ellipse
                 cx="130"
@@ -95,7 +96,7 @@ function KittenSVG({ progress }: { progress: number }) {
                 ry="12"
                 fill={noseColor}
                 opacity="0.6"
-                style={{ transition: 'fill 0.5s ease, opacity 0.5s ease' }}
+                style={{ transition: `fill ${animationTime} ease, opacity ${animationTime} ease` }}
             />
 
             {/* Eyes */}
@@ -105,7 +106,7 @@ function KittenSVG({ progress }: { progress: number }) {
                 rx="6"
                 ry={eyeHeight}
                 fill="#2d3748"
-                style={{ transition: 'ry 0.5s ease' }}
+                style={{ transition: `ry ${animationTime} ease` }}
             />
             <ellipse
                 cx="115"
@@ -113,7 +114,7 @@ function KittenSVG({ progress }: { progress: number }) {
                 rx="6"
                 ry={eyeHeight}
                 fill="#2d3748"
-                style={{ transition: 'ry 0.5s ease' }}
+                style={{ transition: `ry ${animationTime} ease` }}
             />
 
             {/* Eye highlights - more visible as progress increases */}
@@ -123,7 +124,7 @@ function KittenSVG({ progress }: { progress: number }) {
                 r="2"
                 fill="white"
                 opacity={0.3 + (progress * 0.7)}
-                style={{ transition: 'opacity 0.5s ease' }}
+                style={{ transition: `opacity ${animationTime} ease` }}
             />
             <circle
                 cx="117"
@@ -131,7 +132,7 @@ function KittenSVG({ progress }: { progress: number }) {
                 r="2"
                 fill="white"
                 opacity={0.3 + (progress * 0.7)}
-                style={{ transition: 'opacity 0.5s ease' }}
+                style={{ transition: `opacity ${animationTime} ease` }}
             />
 
             {/* Nose */}
@@ -141,7 +142,7 @@ function KittenSVG({ progress }: { progress: number }) {
                 rx="4"
                 ry="3"
                 fill={noseColor}
-                style={{ transition: 'fill 0.5s ease' }}
+                style={{ transition: `fill ${animationTime} ease` }}
             />
 
             {/* Mouth - single continuous smile that curves up more with progress */}
@@ -152,7 +153,7 @@ function KittenSVG({ progress }: { progress: number }) {
                 fill="none"
                 opacity={mouthOpacity}
                 strokeLinecap="round"
-                style={{ transition: 'd 0.5s ease, opacity 0.5s ease' }}
+                style={{ transition: `d ${animationTime} ease, opacity ${animationTime} ease` }}
             />
 
             {/* Whiskers - more visible as progress increases */}
@@ -162,8 +163,8 @@ function KittenSVG({ progress }: { progress: number }) {
             <line x1="135" y1="70" x2="155" y2="72" stroke="#2d3748" strokeWidth="1.5" opacity={0.3 + (progress * 0.4)} />
 
             {/* Paws */}
-            <ellipse cx="75" cy="150" rx="12" ry="15" fill={bodyColor} style={{ transition: 'fill 0.5s ease' }} />
-            <ellipse cx="125" cy="150" rx="12" ry="15" fill={bodyColor} style={{ transition: 'fill 0.5s ease' }} />
+            <ellipse cx="75" cy="150" rx="12" ry="15" fill={bodyColor} style={{ transition: `fill ${animationTime} ease` }} />
+            <ellipse cx="125" cy="150" rx="12" ry="15" fill={bodyColor} style={{ transition: `fill ${animationTime} ease` }} />
 
             {/* Tail */}
             <path
@@ -172,7 +173,7 @@ function KittenSVG({ progress }: { progress: number }) {
                 strokeWidth="18"
                 fill="none"
                 strokeLinecap="round"
-                style={{ transition: 'stroke 0.5s ease' }}
+                style={{ transition: `stroke ${animationTime} ease` }}
             />
 
             {/* Hearts appear more as progress increases */}

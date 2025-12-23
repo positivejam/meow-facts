@@ -51,6 +51,7 @@ export function Game() {
     const [sunshineDialogue, setSunshineDialogue] = useState<string>('');
     const [sunshineDialogueType, setSunshineDialogueType] = useState<SunshineDialogueType>('intro');
     const [recentlyEarnedSparkles, setRecentlyEarnedSparkles] = useState(0);
+    const [displayedProgress, setDisplayedProgress] = useState(0); // For animated progress changes
 
     // Initialize cards and mission when settings change
     useEffect(() => {
@@ -106,6 +107,7 @@ export function Game() {
         setAttempts([]);
         setShowFeedback(false);
         setShowMissionIntro(true);
+        setDisplayedProgress(0);
 
         // Save mission
         saveRescueProgress({ currentMission: mission });
@@ -200,8 +202,13 @@ export function Game() {
         saveProgress(updatedAllCards, []);
         saveRescueProgress({ currentMission: updatedMission });
 
-        // Show feedback
+        // Show feedback, then animate progress change
         setShowFeedback(true);
+
+        // Animate progress after a short delay so user sees the transformation
+        setTimeout(() => {
+            setDisplayedProgress(updatedMission.progress);
+        }, 400);
     };
 
     const handleContinue = () => {
@@ -266,6 +273,7 @@ export function Game() {
         setAttempts([]);
         setShowFeedback(false);
         setShowMissionIntro(true);
+        setDisplayedProgress(0);
         setProblemStartTime(Date.now());
     };
 
@@ -398,7 +406,7 @@ export function Game() {
                     <div className="feedback-animals-container">
                         <AnimalDisplay
                             animalType={currentMission.animalType}
-                            progress={currentMission.progress}
+                            progress={displayedProgress}
                             animalName={currentMission.animalName}
                         />
                         <SunshineDialogue dialogue={sunshineDialogue} type={sunshineDialogueType} />
