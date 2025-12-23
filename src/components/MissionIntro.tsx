@@ -1,6 +1,5 @@
 import type { RescueMission } from '../types/game';
-import { AnimalDisplay } from './AnimalDisplay';
-import { SunshineSVG } from './SunshineSVG';
+import { SunshineScene } from './SunshineScene';
 
 interface MissionIntroProps {
     mission: RescueMission;
@@ -13,17 +12,14 @@ export function MissionIntro({ mission, introDialogue, onAccept }: MissionIntroP
         <div className="mission-intro">
             <h2>A New Friend Needs Help!</h2>
 
-            <div className="mission-intro-characters">
-                <div className="sunshine-dialogue dialogue-intro">
-                    {introDialogue}
-                </div>
-                <AnimalDisplay
-                    animalType={mission.animalType}
-                    progress={0}
-                    animalName={mission.animalName}
-                />
-                <SunshineSVG />
-            </div>
+            <SunshineScene
+                containerClassName="mission-intro-characters"
+                dialogue={introDialogue}
+                dialogueType="intro"
+                animalType={mission.animalType}
+                animalProgress={0}
+                animalName={mission.animalName}
+            />
 
             <button onClick={onAccept} className="help-button" autoFocus>
                 Help {mission.animalName}!

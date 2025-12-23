@@ -15,8 +15,7 @@ import { Feedback } from './Feedback';
 import { StatsDisplay } from './StatsDisplay';
 import { Settings } from './Settings';
 import { AnimalDisplay } from './AnimalDisplay';
-// import { SunshineDialogue } from './SunshineDialogue';
-import { SunshineSVG } from './SunshineSVG';
+import { SunshineScene } from './SunshineScene';
 import { SparklesCounter } from './SparklesCounter';
 
 const DEFAULT_SETTINGS: GameSettings = {
@@ -325,17 +324,14 @@ export function Game() {
                 <div className="session-complete">
                     <h2>{missionSuccessful ? 'Mission Complete!' : "Let's Try Again!"}</h2>
 
-                    <div className="mission-complete-characters">
-                        <div className={`sunshine-dialogue dialogue-${missionSuccessful ? 'rescue-complete' : 'intro'}`}>
-                            {completeDialogue}
-                        </div>
-                        <AnimalDisplay
-                            animalType={currentMission.animalType}
-                            progress={currentMission.progress}
-                            animalName={currentMission.animalName}
-                        />
-                        <SunshineSVG />
-                    </div>
+                    <SunshineScene
+                        containerClassName="mission-complete-characters"
+                        dialogue={completeDialogue}
+                        dialogueType={missionSuccessful ? 'rescue-complete' : 'intro'}
+                        animalType={currentMission.animalType}
+                        animalProgress={currentMission.progress}
+                        animalName={currentMission.animalName}
+                    />
 
                     {missionSuccessful && (
                         <>
@@ -406,17 +402,14 @@ export function Game() {
                 </>
             ) : (
                 <>
-                    <div className="feedback-animals-container">
-                        <div className={`sunshine-dialogue dialogue-${sunshineDialogueType}`}>
-                            {sunshineDialogue}
-                        </div>
-                        <AnimalDisplay
-                            animalType={currentMission.animalType}
-                            progress={displayedProgress}
-                            animalName={currentMission.animalName}
-                        />
-                        <SunshineSVG />
-                    </div>
+                    <SunshineScene
+                        containerClassName="feedback-animals-container"
+                        dialogue={sunshineDialogue}
+                        dialogueType={sunshineDialogueType}
+                        animalType={currentMission.animalType}
+                        animalProgress={displayedProgress}
+                        animalName={currentMission.animalName}
+                    />
                     <Feedback
                         feedbackType={feedbackType}
                         onContinue={handleContinue}
