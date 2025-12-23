@@ -395,7 +395,7 @@ export function Game() {
                     />
                     <ProblemDisplay
                         problem={currentCard.problem}
-                        problemNumber={currentCardIndex + 1}
+                        problemNumber={currentMission.totalAttempts + 1}
                         totalProblems={sessionCards.length}
                     />
                     <AnswerInput onSubmit={handleAnswer} />
