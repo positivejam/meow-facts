@@ -15,14 +15,14 @@ function KittenSVG({ progress }: { progress: number }) {
     const animationTime = '4.0s';
     // Calculate visual properties based on progress
     const opacity = 0.5 + (progress * 0.5); // 0.5 → 1.0
-    const saturation = 50 + (progress * 50); // 50% → 100%
-    const brightness = 80 + (progress * 20); // 80% → 100%
+    const saturation = 35 + (progress * 35); // 35% → 70% (pale to robust)
+    const brightness = 90 - (progress * 25); // 90% → 65% (pale to darker/robust)
     const scale = 0.85 + (progress * 0.15); // 0.85 → 1.0
 
-    // Colors that get more saturated/bright as progress increases
-    const bodyColor = `hsl(320, ${saturation}%, ${brightness}%)`;
-    const earColor = `hsl(330, ${saturation}%, ${brightness - 10}%)`;
-    const noseColor = `hsl(340, ${saturation * 1.2}%, ${brightness - 20}%)`;
+    // Tan colors that get more saturated/robust as progress increases
+    const bodyColor = `hsl(35, ${saturation}%, ${brightness}%)`;
+    const earColor = `hsl(30, ${saturation}%, ${brightness - 5}%)`;
+    const noseColor = `hsl(25, ${saturation + 10}%, ${brightness - 15}%)`;
 
     // Eyes get more open/alert
     const eyeHeight = 8 + (progress * 4); // Eyes open wider
