@@ -32,7 +32,7 @@ export function StatsDisplay({ attempts, targetTime = 5000 }: StatsDisplayProps)
                 <div className="stat-label">Correct</div>
             </div>
             <div className="stat">
-                <div className="stat-value">{fastCorrect}</div>
+                <div className="stat-value">{fastCorrect}/{total}</div>
                 <div className="stat-label">Fast & Correct</div>
             </div>
             <div className="stat">
