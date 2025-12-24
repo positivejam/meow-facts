@@ -12,8 +12,13 @@ export function generateAllFacts(
         ? enabledNumbers
         : Array.from({ length: maxNumber + 1 }, (_, i) => i);
 
-    for (let operand1 = 0; operand1 <= maxNumber; operand1++) {
-        for (let operand2 = 0; operand2 <= maxNumber; operand2++) {
+    // Create set of all possible operands: union of enabledNumbers and 0-maxNumber
+    // This allows enabled numbers to be outside the 0-maxNumber range
+    const rangeNumbers = Array.from({ length: maxNumber + 1 }, (_, i) => i);
+    const allPossibleOperands = Array.from(new Set([...numbersToUse, ...rangeNumbers])).sort((a, b) => a - b);
+
+    for (const operand1 of allPossibleOperands) {
+        for (const operand2 of allPossibleOperands) {
             // Skip if NEITHER operand is in the enabled set
             // (we want facts where AT LEAST ONE operand is enabled)
             if (!numbersToUse.includes(operand1) && !numbersToUse.includes(operand2)) {

@@ -7,7 +7,9 @@ interface SettingsProps {
 }
 
 export function Settings({ settings, onSettingsChange, onClose }: SettingsProps) {
-    const allNumbers = Array.from({ length: settings.maxNumber + 1 }, (_, i) => i);
+    // Fixed range for checkboxes - independent of maxNumber setting
+    const MAX_CHECKBOX_NUMBER = 12;
+    const allNumbers = Array.from({ length: MAX_CHECKBOX_NUMBER + 1 }, (_, i) => i);
 
     const toggleNumber = (num: number) => {
         const currentEnabled = settings.enabledNumbers || allNumbers;
@@ -46,6 +48,13 @@ export function Settings({ settings, onSettingsChange, onClose }: SettingsProps)
         });
     };
 
+    const handleMaxNumberChange = (maxNumber: number) => {
+        onSettingsChange({
+            ...settings,
+            maxNumber,
+        });
+    };
+
     const currentEnabled = settings.enabledNumbers || allNumbers;
     const targetTimeSeconds = settings.targetTime / 1000;
 
@@ -63,6 +72,25 @@ export function Settings({ settings, onSettingsChange, onClose }: SettingsProps)
                 <p className="settings-description">
                     Select which numbers to practice. You'll get facts involving those numbers.
                 </p>
+
+                <div className="settings-section">
+                    <label htmlFor="maxNumber" className="settings-label">
+                        Maximum Number to Combine With:
+                    </label>
+                    <select
+                        id="maxNumber"
+                        value={settings.maxNumber}
+                        onChange={(e) => handleMaxNumberChange(Number(e.target.value))}
+                        className="max-number-select"
+                    >
+                        {Array.from({ length: 13 }, (_, i) => (
+                            <option key={i} value={i}>{i}</option>
+                        ))}
+                    </select>
+                    <p className="settings-hint">
+                        Selected numbers below will be combined with 0 through {settings.maxNumber}
+                    </p>
+                </div>
 
                 <div className="checkbox-grid">
                     {allNumbers.map(num => (

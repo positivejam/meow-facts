@@ -334,6 +334,34 @@
     margin-bottom: 24px;
 }
 
+.settings-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: #333;
+}
+
+.max-number-select {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: border-color 0.2s;
+}
+
+.max-number-select:hover {
+    border-color: #667eea;
+}
+
+.max-number-select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.2);
+}
+
 .settings-hint {
     color: #888;
     font-size: 0.9rem;
