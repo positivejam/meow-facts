@@ -135,7 +135,7 @@ function KittenSVG({ progress }: { progress: number }) {
 
             {/* Mouth - single continuous smile that curves up more with progress */}
             <path
-                d={`M 85 72 Q 100 ${72 + mouthCurve} 115 72`}
+                d={`M 85 76 Q 100 ${76 + mouthCurve} 115 76`}
                 stroke="#2d3748"
                 strokeWidth="3"
                 fill="none"
