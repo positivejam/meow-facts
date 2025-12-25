@@ -55,37 +55,32 @@ export function Game() {
 
     // Initialize cards and mission when settings change
     useEffect(() => {
+        // Always generate fresh cards based on current settings
+        // Then merge in spaced repetition data from storage for matching cards
+        const newCards = generateAllFacts(
+            settings.operation,
+            settings.maxNumber,
+            settings.enabledNumbers
+        );
+
+        // Load stored progress and merge spaced repetition data
         const stored = loadProgress();
-
         if (stored && stored.cards.length > 0) {
-            // Filter existing cards based on enabled numbers
-            const filtered = stored.cards.filter(card =>
-                settings.enabledNumbers.includes(card.problem.operand1) ||
-                settings.enabledNumbers.includes(card.problem.operand2)
+            // Create a map of stored card data by problem ID
+            const storedCardMap = new Map(
+                stored.cards.map(card => [card.problem.id, card])
             );
 
-            if (filtered.length > 0) {
-                setAllCards(filtered);
-                const selected = selectCards(filtered, settings.cardsPerSession);
-                setSessionCards(selected);
-            } else {
-                // No matching cards in storage, generate new ones
-                const newCards = generateAllFacts(
-                    settings.operation,
-                    settings.maxNumber,
-                    settings.enabledNumbers
-                );
-                setAllCards(newCards);
-                const selected = selectCards(newCards, settings.cardsPerSession);
-                setSessionCards(selected);
-            }
+            // Merge stored data into new cards where IDs match
+            const mergedCards = newCards.map(newCard => {
+                const storedCard = storedCardMap.get(newCard.problem.id);
+                return storedCard || newCard; // Use stored data if exists, otherwise new card
+            });
+
+            setAllCards(mergedCards);
+            const selected = selectCards(mergedCards, settings.cardsPerSession);
+            setSessionCards(selected);
         } else {
-            // Generate new card deck
-            const newCards = generateAllFacts(
-                settings.operation,
-                settings.maxNumber,
-                settings.enabledNumbers
-            );
             setAllCards(newCards);
             const selected = selectCards(newCards, settings.cardsPerSession);
             setSessionCards(selected);
