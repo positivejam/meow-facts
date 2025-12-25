@@ -96,7 +96,10 @@ export function Game() {
     }, [settings]);
 
     const startNewMission = (selectNewCards = false) => {
-        const mission = createNewMission('kitten', 'living-room');
+        // Randomly select animal type
+        const animalTypes: ('kitten' | 'puppy')[] = ['kitten', 'puppy'];
+        const randomAnimalType = animalTypes[Math.floor(Math.random() * animalTypes.length)];
+        const mission = createNewMission(randomAnimalType, 'living-room');
         setCurrentMission(mission);
 
         // Select new cards only when starting a new mission after completing one
