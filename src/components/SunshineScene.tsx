@@ -32,7 +32,12 @@ export function SunshineScene({
                 animalName={animalName}
                 animate={animate}
             />
-            <SunshineSVG />
+            <div className="animal-display">
+                <div className="animal-container">
+                    <SunshineSVG />
+                </div>
+                <div className="animal-name">Sunshine</div>
+            </div>
         </div>
     );
 }
