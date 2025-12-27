@@ -16,8 +16,8 @@ import { StatsDisplay } from './StatsDisplay';
 import { Settings } from './Settings';
 import { AnimalDisplay } from './AnimalDisplay';
 import { CompanionScene } from './CompanionScene';
-import { SparklesCounter } from './SparklesCounter';
 import { AllCaughtUp } from './AllCaughtUp';
+import { GameHeader } from './GameHeader';
 
 const DEFAULT_SETTINGS: GameSettings = {
     operation: 'addition',
@@ -351,13 +351,11 @@ export function Game() {
         const nextDue = getNextDueTime(allCards);
         return (
             <div className="game">
-                <div className="game-header">
-                    <h1>Meow Facts</h1>
-                    <SparklesCounter sparkles={sparkles.total} recentlyEarned={0} />
-                    <button onClick={() => setShowSettings(true)} className="settings-button">
-                        ⚙️
-                    </button>
-                </div>
+                <GameHeader
+                    sparklesTotal={sparkles.total}
+                    recentlyEarned={0}
+                    onSettingsClick={() => setShowSettings(true)}
+                />
                 <AllCaughtUp
                     nextDueTime={nextDue}
                     onBonusPractice={handleBonusPractice}
@@ -387,13 +385,11 @@ export function Game() {
             const nextDue = getNextDueTime(allCards);
             return (
                 <div className="game">
-                    <div className="game-header">
-                        <h1>Meow Facts</h1>
-                        <SparklesCounter sparkles={sparkles.total} recentlyEarned={0} />
-                        <button onClick={() => setShowSettings(true)} className="settings-button">
-                            ⚙️
-                        </button>
-                    </div>
+                    <GameHeader
+                        sparklesTotal={sparkles.total}
+                        recentlyEarned={0}
+                        onSettingsClick={() => setShowSettings(true)}
+                    />
                     <AllCaughtUp
                         nextDueTime={nextDue}
                         onBonusPractice={handleBonusPractice}
@@ -465,13 +461,12 @@ export function Game() {
 
     return (
         <div className="game">
-            <div className="game-header">
-                <h1>Meow Facts{isBonusMode && <span className="bonus-badge">Bonus Practice!</span>}</h1>
-                <SparklesCounter sparkles={sparkles.total} recentlyEarned={recentlyEarnedSparkles} />
-                <button onClick={() => setShowSettings(true)} className="settings-button">
-                    ⚙️
-                </button>
-            </div>
+            <GameHeader
+                sparklesTotal={sparkles.total}
+                recentlyEarned={recentlyEarnedSparkles}
+                isBonusMode={isBonusMode}
+                onSettingsClick={() => setShowSettings(true)}
+            />
 
             {showMissionIntro ? (
                 <MissionIntro
