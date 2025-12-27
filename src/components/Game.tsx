@@ -2,13 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import type { MathFactCard, GameSettings, ProblemAttempt, RescueMission, SparklesData, SunshineDialogueType } from '../types/game';
 import { generateAllFacts } from '../utils/cardGenerator';
 import { selectCards, updateCard, selectBonusCards, getNextDueTime } from '../utils/spacedRepetition';
-import { saveProgress, loadProgress } from '../utils/storage';
+import { saveProgress, loadProgress, saveRescueProgress, loadRescueProgress, loadSettings, saveSettings, loadSparkles as loadSparklesFromDB, saveSparkles as saveSparklesToDB } from '../utils/storage-dexie';
 import { determineFeedbackType, type FeedbackType } from '../utils/feedback';
 import { createNewMission, isMissionComplete, isMissionSuccessful, getMissionIntroDialogue, getMissionCompleteDialogue } from '../utils/rescue';
 import { getSunshineDialogue } from '../utils/sunshine';
 import { MissionIntro } from './MissionIntro';
-import { loadSparkles, saveSparkles, awardSparkles, SPARKLES_PER_FAST_CORRECT } from '../utils/sparkles';
-import { loadRescueProgress, saveRescueProgress } from '../utils/rescueStorage';
+import { awardSparkles, SPARKLES_PER_FAST_CORRECT } from '../utils/sparkles';
 import { ProblemDisplay } from './ProblemDisplay';
 import { AnswerInput } from './AnswerInput';
 import { Feedback } from './Feedback';
@@ -27,14 +26,8 @@ const DEFAULT_SETTINGS: GameSettings = {
     targetTime: 5000, // 5 seconds
 };
 
-const SETTINGS_STORAGE_KEY = 'meow-facts-settings';
-
 export function Game() {
-    const [settings, setSettings] = useState<GameSettings>(() => {
-        // Load settings from localStorage
-        const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
-        return stored ? JSON.parse(stored) : DEFAULT_SETTINGS;
-    });
+    const [settings, setSettings] = useState<GameSettings>(DEFAULT_SETTINGS);
     const [allCards, setAllCards] = useState<MathFactCard[]>([]);
     const [sessionCards, setSessionCards] = useState<MathFactCard[]>([]);
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
@@ -56,8 +49,19 @@ export function Game() {
     const [isBonusMode, setIsBonusMode] = useState(false);
     const [showAllCaughtUp, setShowAllCaughtUp] = useState(false);
 
+    // Load settings from Dexie on mount
+    useEffect(() => {
+        const loadInitialSettings = async () => {
+            const stored = await loadSettings();
+            if (stored) {
+                setSettings(stored);
+            }
+        };
+        loadInitialSettings();
+    }, []);
+
     // Helper function to initialize a new mission with fresh state
-    const initializeMissionState = useCallback(() => {
+    const initializeMissionState = useCallback(async () => {
         // Randomly select animal type
         const animalTypes: ('kitten' | 'puppy')[] = ['kitten', 'puppy'];
         const randomAnimalType = animalTypes[Math.floor(Math.random() * animalTypes.length)];
@@ -68,10 +72,10 @@ export function Game() {
         setShowFeedback(false);
         setShowMissionIntro(true);
         setDisplayedProgress(0);
-        saveRescueProgress({ currentMission: mission });
+        await saveRescueProgress({ currentMission: mission });
     }, []);
 
-    const startNewMission = useCallback((selectNewCards = false) => {
+    const startNewMission = useCallback(async (selectNewCards = false) => {
         // Select new cards only when starting a new mission after completing one
         // (not on initial load, since useEffect already selects cards)
         if (selectNewCards) {
@@ -79,62 +83,66 @@ export function Game() {
             setSessionCards(selected);
         }
 
-        initializeMissionState();
+        await initializeMissionState();
     }, [allCards, settings, initializeMissionState]);
 
     // Initialize cards and mission when settings change
     useEffect(() => {
-        // Always generate fresh cards based on current settings
-        // Then merge in spaced repetition data from storage for matching cards
-        const newCards = generateAllFacts(
-            settings.operation,
-            settings.maxNumber,
-            settings.enabledNumbers
-        );
-
-        // Load stored progress and merge spaced repetition data
-        const stored = loadProgress();
-        let cardsToUse: MathFactCard[];
-        if (stored && stored.cards.length > 0) {
-            // Create a map of stored card data by problem ID
-            const storedCardMap = new Map(
-                stored.cards.map(card => [card.problem.id, card])
+        const initializeCards = async () => {
+            // Always generate fresh cards based on current settings
+            // Then merge in spaced repetition data from storage for matching cards
+            const newCards = generateAllFacts(
+                settings.operation,
+                settings.maxNumber,
+                settings.enabledNumbers
             );
 
-            // Merge stored data into new cards where IDs match
-            const mergedCards = newCards.map(newCard => {
-                const storedCard = storedCardMap.get(newCard.problem.id);
-                return storedCard || newCard; // Use stored data if exists, otherwise new card
-            });
+            // Load stored progress and merge spaced repetition data
+            const stored = await loadProgress();
+            let cardsToUse: MathFactCard[];
+            if (stored && stored.cards.length > 0) {
+                // Create a map of stored card data by problem ID
+                const storedCardMap = new Map(
+                    stored.cards.map(card => [card.problem.id, card])
+                );
 
-            cardsToUse = mergedCards;
-        } else {
-            cardsToUse = newCards;
-        }
+                // Merge stored data into new cards where IDs match
+                const mergedCards = newCards.map(newCard => {
+                    const storedCard = storedCardMap.get(newCard.problem.id);
+                    return storedCard || newCard; // Use stored data if exists, otherwise new card
+                });
 
-        setAllCards(cardsToUse);
-        const selected = selectCards(cardsToUse, settings.cardsPerSession);
+                cardsToUse = mergedCards;
+            } else {
+                cardsToUse = newCards;
+            }
 
-        // Check if we have enough due cards
-        if (selected.length === 0) {
-            // No due cards - show "all caught up" screen
-            setSessionCards([]);
-            setShowAllCaughtUp(true);
-            setIsBonusMode(false);
-            setShowMissionIntro(false);
-        } else {
-            // Have due cards - proceed normally
-            setSessionCards(selected);
-            setShowAllCaughtUp(false);
-            setIsBonusMode(false);
+            setAllCards(cardsToUse);
+            const selected = selectCards(cardsToUse, settings.cardsPerSession);
 
-            // Initialize a new mission
-            initializeMissionState();
-        }
+            // Check if we have enough due cards
+            if (selected.length === 0) {
+                // No due cards - show "all caught up" screen
+                setSessionCards([]);
+                setShowAllCaughtUp(true);
+                setIsBonusMode(false);
+                setShowMissionIntro(false);
+            } else {
+                // Have due cards - proceed normally
+                setSessionCards(selected);
+                setShowAllCaughtUp(false);
+                setIsBonusMode(false);
 
-        // Load sparkles
-        const loadedSparkles = loadSparkles();
-        setSparkles(loadedSparkles);
+                // Initialize a new mission
+                await initializeMissionState();
+            }
+
+            // Load sparkles
+            const loadedSparkles = await loadSparklesFromDB();
+            setSparkles(loadedSparkles);
+        };
+
+        initializeCards();
     }, [settings, initializeMissionState]);
 
     const handleAcceptMission = () => {
@@ -142,7 +150,7 @@ export function Game() {
         setProblemStartTime(Date.now());
     };
 
-    const handleBonusPractice = () => {
+    const handleBonusPractice = async () => {
         // Select bonus cards
         const bonusCards = selectBonusCards(allCards, settings.cardsPerSession);
         setSessionCards(bonusCards);
@@ -150,10 +158,10 @@ export function Game() {
         setShowAllCaughtUp(false);
 
         // Start a new mission for bonus practice
-        initializeMissionState();
+        await initializeMissionState();
     };
 
-    const handleAnswer = (userAnswer: number) => {
+    const handleAnswer = async (userAnswer: number) => {
         if (currentCardIndex >= sessionCards.length || !currentMission) return;
 
         const currentCard = sessionCards[currentCardIndex];
@@ -191,7 +199,7 @@ export function Game() {
         if (isFastCorrect) {
             const newSparkles = awardSparkles(sparkles, SPARKLES_PER_FAST_CORRECT);
             setSparkles(newSparkles);
-            saveSparkles(newSparkles);
+            await saveSparklesToDB(newSparkles);
             setRecentlyEarnedSparkles(SPARKLES_PER_FAST_CORRECT);
         } else {
             setRecentlyEarnedSparkles(0);
@@ -234,8 +242,8 @@ export function Game() {
         setSessionCards(updatedSessionCards);
 
         // Save progress
-        saveProgress(updatedAllCards, []);
-        saveRescueProgress({ currentMission: updatedMission });
+        await saveProgress(updatedAllCards, []);
+        await saveRescueProgress({ currentMission: updatedMission });
 
         // Show feedback, then animate progress change
         setShowFeedback(true);
@@ -263,15 +271,15 @@ export function Game() {
         setProblemStartTime(Date.now());
     };
 
-    const handleMissionComplete = () => {
+    const handleMissionComplete = async () => {
         if (!currentMission) return;
 
         const successful = isMissionSuccessful(currentMission.progress);
 
         if (successful) {
             // Save completed mission
-            const rescueData = loadRescueProgress();
-            saveRescueProgress({
+            const rescueData = await loadRescueProgress();
+            await saveRescueProgress({
                 completedMissions: [...rescueData.completedMissions, currentMission],
                 currentMission: null,
             });
@@ -284,7 +292,7 @@ export function Game() {
         }
     };
 
-    const handleRetryMission = () => {
+    const handleRetryMission = async () => {
         if (!currentMission) return;
 
         // Reset mission attempts but keep the same animal
@@ -298,7 +306,7 @@ export function Game() {
         };
 
         setCurrentMission(resetMission);
-        saveRescueProgress({ currentMission: resetMission });
+        await saveRescueProgress({ currentMission: resetMission });
 
         // Restart session
         const selected = selectCards(allCards, settings.cardsPerSession);
@@ -311,9 +319,9 @@ export function Game() {
         setProblemStartTime(Date.now());
     };
 
-    const handleSettingsChange = (newSettings: GameSettings) => {
+    const handleSettingsChange = async (newSettings: GameSettings) => {
         setSettings(newSettings);
-        localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(newSettings));
+        await saveSettings(newSettings);
     };
 
     const handleCloseSettings = () => {
