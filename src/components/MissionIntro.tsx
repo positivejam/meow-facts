@@ -1,5 +1,5 @@
 import type { RescueMission } from '../types/game';
-import { SunshineScene } from './SunshineScene';
+import { CompanionScene } from './CompanionScene';
 
 interface MissionIntroProps {
     mission: RescueMission;
@@ -12,7 +12,7 @@ export function MissionIntro({ mission, introDialogue, onAccept }: MissionIntroP
         <div className="mission-intro">
             <h2>A New Friend Needs Help!</h2>
 
-            <SunshineScene
+            <CompanionScene
                 containerClassName="mission-intro-characters"
                 dialogue={introDialogue}
                 dialogueType="intro"

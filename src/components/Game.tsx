@@ -15,7 +15,7 @@ import { Feedback } from './Feedback';
 import { StatsDisplay } from './StatsDisplay';
 import { Settings } from './Settings';
 import { AnimalDisplay } from './AnimalDisplay';
-import { SunshineScene } from './SunshineScene';
+import { CompanionScene } from './CompanionScene';
 import { SparklesCounter } from './SparklesCounter';
 
 const DEFAULT_SETTINGS: GameSettings = {
@@ -337,7 +337,7 @@ export function Game() {
                 <div className="session-complete">
                     <h2>{missionSuccessful ? 'Mission Complete!' : "Let's Try Again!"}</h2>
 
-                    <SunshineScene
+                    <CompanionScene
                         containerClassName="mission-complete-characters"
                         dialogue={completeDialogue}
                         dialogueType={missionSuccessful ? 'rescue-complete' : 'intro'}
@@ -415,7 +415,7 @@ export function Game() {
                 </>
             ) : (
                 <>
-                    <SunshineScene
+                    <CompanionScene
                         containerClassName="feedback-animals-container"
                         dialogue={sunshineDialogue}
                         dialogueType={sunshineDialogueType}

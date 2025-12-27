@@ -2,7 +2,7 @@ import type { AnimalType, SunshineDialogueType } from '../types/game';
 import { AnimalDisplay } from './AnimalDisplay';
 import { SunshineSVG } from './SunshineSVG';
 
-interface SunshineSceneProps {
+interface CompanionSceneProps {
     containerClassName: string;
     dialogue: string;
     dialogueType: SunshineDialogueType;
@@ -12,7 +12,7 @@ interface SunshineSceneProps {
     animate?: boolean; // Whether to show celebration animation on the animal
 }
 
-export function SunshineScene({
+export function CompanionScene({
     containerClassName,
     dialogue,
     dialogueType,
@@ -20,7 +20,7 @@ export function SunshineScene({
     animalProgress,
     animalName,
     animate = false,
-}: SunshineSceneProps) {
+}: CompanionSceneProps) {
     return (
         <div className={containerClassName}>
             <div className={`sunshine-dialogue dialogue-${dialogueType}`}>
