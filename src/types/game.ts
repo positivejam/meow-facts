@@ -63,10 +63,11 @@ export interface ProgressData {
 
 // Rescue Game Types
 export type AnimalState = 'needs-help' | 'improving' | 'rescued';
+export type AnimalType = 'kitten' | 'puppy' | 'snail';
 
 export interface RescueMission {
   id: string;
-  animalType: 'kitten' | 'puppy' | 'snail';
+  animalType: AnimalType;
   animalName: string;
   animalPronoun: 'she' | 'he';
   animalProblem: 'cold' | 'hungry' | 'lonely' | 'tired';
