@@ -56,13 +56,22 @@ export function Game() {
     const [isBonusMode, setIsBonusMode] = useState(false);
     const [showAllCaughtUp, setShowAllCaughtUp] = useState(false);
 
-    const startNewMission = useCallback((selectNewCards = false) => {
+    // Helper function to initialize a new mission with fresh state
+    const initializeMissionState = useCallback(() => {
         // Randomly select animal type
         const animalTypes: ('kitten' | 'puppy')[] = ['kitten', 'puppy'];
         const randomAnimalType = animalTypes[Math.floor(Math.random() * animalTypes.length)];
         const mission = createNewMission(randomAnimalType, 'living-room');
         setCurrentMission(mission);
+        setCurrentCardIndex(0);
+        setAttempts([]);
+        setShowFeedback(false);
+        setShowMissionIntro(true);
+        setDisplayedProgress(0);
+        saveRescueProgress({ currentMission: mission });
+    }, []);
 
+    const startNewMission = useCallback((selectNewCards = false) => {
         // Select new cards only when starting a new mission after completing one
         // (not on initial load, since useEffect already selects cards)
         if (selectNewCards) {
@@ -70,15 +79,8 @@ export function Game() {
             setSessionCards(selected);
         }
 
-        setCurrentCardIndex(0);
-        setAttempts([]);
-        setShowFeedback(false);
-        setShowMissionIntro(true);
-        setDisplayedProgress(0);
-
-        // Save mission
-        saveRescueProgress({ currentMission: mission });
-    }, [allCards, settings]);
+        initializeMissionState();
+    }, [allCards, settings, initializeMissionState]);
 
     // Initialize cards and mission when settings change
     useEffect(() => {
@@ -127,22 +129,13 @@ export function Game() {
             setIsBonusMode(false);
 
             // Initialize a new mission
-            const animalTypes: ('kitten' | 'puppy')[] = ['kitten', 'puppy'];
-            const randomAnimalType = animalTypes[Math.floor(Math.random() * animalTypes.length)];
-            const mission = createNewMission(randomAnimalType, 'living-room');
-            setCurrentMission(mission);
-            setCurrentCardIndex(0);
-            setAttempts([]);
-            setShowFeedback(false);
-            setShowMissionIntro(true);
-            setDisplayedProgress(0);
-            saveRescueProgress({ currentMission: mission });
+            initializeMissionState();
         }
 
         // Load sparkles
         const loadedSparkles = loadSparkles();
         setSparkles(loadedSparkles);
-    }, [settings]);
+    }, [settings, initializeMissionState]);
 
     const handleAcceptMission = () => {
         setShowMissionIntro(false);
@@ -157,16 +150,7 @@ export function Game() {
         setShowAllCaughtUp(false);
 
         // Start a new mission for bonus practice
-        const animalTypes: ('kitten' | 'puppy')[] = ['kitten', 'puppy'];
-        const randomAnimalType = animalTypes[Math.floor(Math.random() * animalTypes.length)];
-        const mission = createNewMission(randomAnimalType, 'living-room');
-        setCurrentMission(mission);
-        setCurrentCardIndex(0);
-        setAttempts([]);
-        setShowFeedback(false);
-        setShowMissionIntro(true);
-        setDisplayedProgress(0);
-        saveRescueProgress({ currentMission: mission });
+        initializeMissionState();
     };
 
     const handleAnswer = (userAnswer: number) => {
