@@ -380,29 +380,27 @@ export function Game() {
     const missionSuccessful = isMissionSuccessful(currentMission.progress);
 
     if (missionComplete) {
-        // If this was bonus practice and there are still no due cards, show AllCaughtUp
-        if (isBonusMode) {
-            const dueCards = selectCards(allCards, settings.cardsPerSession);
-            if (dueCards.length === 0) {
-                // Still no due cards - show AllCaughtUp again
-                const nextDue = getNextDueTime(allCards);
-                return (
-                    <div className="game">
-                        <div className="game-header">
-                            <h1>Meow Facts</h1>
-                            <SparklesCounter sparkles={sparkles.total} recentlyEarned={0} />
-                            <button onClick={() => setShowSettings(true)} className="settings-button">
-                                ⚙️
-                            </button>
-                        </div>
-                        <AllCaughtUp
-                            nextDueTime={nextDue}
-                            onBonusPractice={handleBonusPractice}
-                            onSettings={() => setShowSettings(true)}
-                        />
+        // Check if there are no more due cards (regardless of bonus mode)
+        const dueCards = selectCards(allCards, settings.cardsPerSession);
+        if (dueCards.length === 0) {
+            // No more due cards - show AllCaughtUp screen
+            const nextDue = getNextDueTime(allCards);
+            return (
+                <div className="game">
+                    <div className="game-header">
+                        <h1>Meow Facts</h1>
+                        <SparklesCounter sparkles={sparkles.total} recentlyEarned={0} />
+                        <button onClick={() => setShowSettings(true)} className="settings-button">
+                            ⚙️
+                        </button>
                     </div>
-                );
-            }
+                    <AllCaughtUp
+                        nextDueTime={nextDue}
+                        onBonusPractice={handleBonusPractice}
+                        onSettings={() => setShowSettings(true)}
+                    />
+                </div>
+            );
         }
 
         // Call complete handler if not already called
