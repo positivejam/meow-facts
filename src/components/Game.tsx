@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import type { MathFactCard, GameSettings, ProblemAttempt, RescueMission, SparklesData, SunshineDialogueType } from '../types/game';
 import { generateAllFacts } from '../utils/cardGenerator';
 import { selectCards, updateCard } from '../utils/spacedRepetition';
@@ -53,6 +53,30 @@ export function Game() {
     const [recentlyEarnedSparkles, setRecentlyEarnedSparkles] = useState(0);
     const [displayedProgress, setDisplayedProgress] = useState(0); // For animated progress changes
 
+    const startNewMission = useCallback((selectNewCards = false) => {
+        // Randomly select animal type
+        const animalTypes: ('kitten' | 'puppy')[] = ['kitten', 'puppy'];
+        const randomAnimalType = animalTypes[Math.floor(Math.random() * animalTypes.length)];
+        const mission = createNewMission(randomAnimalType, 'living-room');
+        setCurrentMission(mission);
+
+        // Select new cards only when starting a new mission after completing one
+        // (not on initial load, since useEffect already selects cards)
+        if (selectNewCards) {
+            const selected = selectCards(allCards, settings.cardsPerSession);
+            setSessionCards(selected);
+        }
+
+        setCurrentCardIndex(0);
+        setAttempts([]);
+        setShowFeedback(false);
+        setShowMissionIntro(true);
+        setDisplayedProgress(0);
+
+        // Save mission
+        saveRescueProgress({ currentMission: mission });
+    }, [allCards, settings]);
+
     // Initialize cards and mission when settings change
     useEffect(() => {
         // Always generate fresh cards based on current settings
@@ -90,34 +114,18 @@ export function Game() {
         const loadedSparkles = loadSparkles();
         setSparkles(loadedSparkles);
 
-        // Start a new mission
-        // eslint-disable-next-line react-hooks/immutability
-        startNewMission();
-    }, [settings]);
-
-    const startNewMission = (selectNewCards = false) => {
-        // Randomly select animal type
+        // Initialize a new mission
         const animalTypes: ('kitten' | 'puppy')[] = ['kitten', 'puppy'];
         const randomAnimalType = animalTypes[Math.floor(Math.random() * animalTypes.length)];
         const mission = createNewMission(randomAnimalType, 'living-room');
         setCurrentMission(mission);
-
-        // Select new cards only when starting a new mission after completing one
-        // (not on initial load, since useEffect already selects cards)
-        if (selectNewCards) {
-            const selected = selectCards(allCards, settings.cardsPerSession);
-            setSessionCards(selected);
-        }
-
         setCurrentCardIndex(0);
         setAttempts([]);
         setShowFeedback(false);
         setShowMissionIntro(true);
         setDisplayedProgress(0);
-
-        // Save mission
         saveRescueProgress({ currentMission: mission });
-    };
+    }, [settings]);
 
     const handleAcceptMission = () => {
         setShowMissionIntro(false);
