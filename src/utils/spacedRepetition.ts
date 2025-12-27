@@ -96,7 +96,6 @@ export function selectCards(
 
     // Separate cards into categories
     const dueCards = allCards.filter(card => card.nextReview <= now);
-    console.log(`due cards count: ${dueCards.length}`)
     const newCards = dueCards.filter(card => card.totalAttempts === 0);
     const reviewCards = dueCards.filter(card => card.totalAttempts > 0);
 
