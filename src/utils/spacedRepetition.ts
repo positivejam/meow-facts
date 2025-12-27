@@ -96,6 +96,7 @@ export function selectCards(
 
     // Separate cards into categories
     const dueCards = allCards.filter(card => card.nextReview <= now);
+    console.log(`due cards count: ${dueCards.length}`)
     const newCards = dueCards.filter(card => card.totalAttempts === 0);
     const reviewCards = dueCards.filter(card => card.totalAttempts > 0);
 
@@ -145,6 +146,66 @@ export function selectCards(
 
     // Shuffle the selected cards so they're not always in the same order
     return selected.sort(() => Math.random() - 0.5);
+}
+
+/**
+ * Select cards for bonus practice when no cards are due
+ * Prioritizes cards closest to being due, mixed with least-recently-practiced
+ */
+export function selectBonusCards(
+    allCards: MathFactCard[],
+    cardsPerSession: number
+): MathFactCard[] {
+    const now = Date.now();
+
+    // Get cards that aren't due yet, sorted by how close they are to being due
+    const notDueCards = allCards
+        .filter(card => card.nextReview > now)
+        .sort((a, b) => a.nextReview - b.nextReview); // Soonest first
+
+    // Get least-recently-practiced cards (cards that have been practiced)
+    const practicedCards = [...allCards]
+        .filter(card => card.lastReviewed && card.lastReviewed > 0)
+        .sort((a, b) => (a.lastReviewed || 0) - (b.lastReviewed || 0)); // Oldest first
+
+    // Combine: mostly soonest-due, some least-recent
+    const selected: MathFactCard[] = [];
+    const soonestCount = Math.floor(cardsPerSession * 0.7);
+
+    // Add soonest-due cards
+    selected.push(...notDueCards.slice(0, soonestCount));
+
+    // Fill remaining with least-recent cards that aren't already selected
+    if (selected.length < cardsPerSession && practicedCards.length > 0) {
+        const remaining = practicedCards
+            .filter(card => !selected.includes(card))
+            .slice(0, cardsPerSession - selected.length);
+        selected.push(...remaining);
+    }
+
+    // If still need more, just take any cards
+    if (selected.length < cardsPerSession) {
+        const remaining = allCards
+            .filter(card => !selected.includes(card))
+            .slice(0, cardsPerSession - selected.length);
+        selected.push(...remaining);
+    }
+
+    // Shuffle so they're not always in the same order
+    return selected.sort(() => Math.random() - 0.5);
+}
+
+/**
+ * Get the timestamp of when the next card will be due
+ * Returns null if no cards or all cards are currently due
+ */
+export function getNextDueTime(allCards: MathFactCard[]): number | null {
+    const now = Date.now();
+    const futureCards = allCards.filter(card => card.nextReview > now);
+
+    if (futureCards.length === 0) return null;
+
+    return Math.min(...futureCards.map(card => card.nextReview));
 }
 
 /**

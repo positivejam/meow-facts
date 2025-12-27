@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { MathFactCard, GameSettings, ProblemAttempt, RescueMission, SparklesData, SunshineDialogueType } from '../types/game';
 import { generateAllFacts } from '../utils/cardGenerator';
-import { selectCards, updateCard } from '../utils/spacedRepetition';
+import { selectCards, updateCard, selectBonusCards, getNextDueTime } from '../utils/spacedRepetition';
 import { saveProgress, loadProgress } from '../utils/storage';
 import { determineFeedbackType, type FeedbackType } from '../utils/feedback';
 import { createNewMission, isMissionComplete, isMissionSuccessful, getMissionIntroDialogue, getMissionCompleteDialogue } from '../utils/rescue';
@@ -17,6 +17,7 @@ import { Settings } from './Settings';
 import { AnimalDisplay } from './AnimalDisplay';
 import { CompanionScene } from './CompanionScene';
 import { SparklesCounter } from './SparklesCounter';
+import { AllCaughtUp } from './AllCaughtUp';
 
 const DEFAULT_SETTINGS: GameSettings = {
     operation: 'addition',
@@ -52,6 +53,8 @@ export function Game() {
     const [sunshineDialogueType, setSunshineDialogueType] = useState<SunshineDialogueType>('intro');
     const [recentlyEarnedSparkles, setRecentlyEarnedSparkles] = useState(0);
     const [displayedProgress, setDisplayedProgress] = useState(0); // For animated progress changes
+    const [isBonusMode, setIsBonusMode] = useState(false);
+    const [showAllCaughtUp, setShowAllCaughtUp] = useState(false);
 
     const startNewMission = useCallback((selectNewCards = false) => {
         // Randomly select animal type
@@ -89,6 +92,7 @@ export function Game() {
 
         // Load stored progress and merge spaced repetition data
         const stored = loadProgress();
+        let cardsToUse: MathFactCard[];
         if (stored && stored.cards.length > 0) {
             // Create a map of stored card data by problem ID
             const storedCardMap = new Map(
@@ -101,20 +105,58 @@ export function Game() {
                 return storedCard || newCard; // Use stored data if exists, otherwise new card
             });
 
-            setAllCards(mergedCards);
-            const selected = selectCards(mergedCards, settings.cardsPerSession);
-            setSessionCards(selected);
+            cardsToUse = mergedCards;
         } else {
-            setAllCards(newCards);
-            const selected = selectCards(newCards, settings.cardsPerSession);
+            cardsToUse = newCards;
+        }
+
+        setAllCards(cardsToUse);
+        const selected = selectCards(cardsToUse, settings.cardsPerSession);
+
+        // Check if we have enough due cards
+        if (selected.length === 0) {
+            // No due cards - show "all caught up" screen
+            setSessionCards([]);
+            setShowAllCaughtUp(true);
+            setIsBonusMode(false);
+            setShowMissionIntro(false);
+        } else {
+            // Have due cards - proceed normally
             setSessionCards(selected);
+            setShowAllCaughtUp(false);
+            setIsBonusMode(false);
+
+            // Initialize a new mission
+            const animalTypes: ('kitten' | 'puppy')[] = ['kitten', 'puppy'];
+            const randomAnimalType = animalTypes[Math.floor(Math.random() * animalTypes.length)];
+            const mission = createNewMission(randomAnimalType, 'living-room');
+            setCurrentMission(mission);
+            setCurrentCardIndex(0);
+            setAttempts([]);
+            setShowFeedback(false);
+            setShowMissionIntro(true);
+            setDisplayedProgress(0);
+            saveRescueProgress({ currentMission: mission });
         }
 
         // Load sparkles
         const loadedSparkles = loadSparkles();
         setSparkles(loadedSparkles);
+    }, [settings]);
 
-        // Initialize a new mission
+    const handleAcceptMission = () => {
+        setShowMissionIntro(false);
+        setProblemStartTime(Date.now());
+    };
+
+    const handleBonusPractice = () => {
+        // Select bonus cards
+        const bonusCards = selectBonusCards(allCards, settings.cardsPerSession);
+        setSessionCards(bonusCards);
+        setIsBonusMode(true);
+        setShowAllCaughtUp(false);
+
+        // Start a new mission for bonus practice
         const animalTypes: ('kitten' | 'puppy')[] = ['kitten', 'puppy'];
         const randomAnimalType = animalTypes[Math.floor(Math.random() * animalTypes.length)];
         const mission = createNewMission(randomAnimalType, 'living-room');
@@ -125,11 +167,6 @@ export function Game() {
         setShowMissionIntro(true);
         setDisplayedProgress(0);
         saveRescueProgress({ currentMission: mission });
-    }, [settings]);
-
-    const handleAcceptMission = () => {
-        setShowMissionIntro(false);
-        setProblemStartTime(Date.now());
     };
 
     const handleAnswer = (userAnswer: number) => {
@@ -310,6 +347,26 @@ export function Game() {
         );
     }
 
+    if (showAllCaughtUp) {
+        const nextDue = getNextDueTime(allCards);
+        return (
+            <div className="game">
+                <div className="game-header">
+                    <h1>Meow Facts</h1>
+                    <SparklesCounter sparkles={sparkles.total} recentlyEarned={0} />
+                    <button onClick={() => setShowSettings(true)} className="settings-button">
+                        ⚙️
+                    </button>
+                </div>
+                <AllCaughtUp
+                    nextDueTime={nextDue}
+                    onBonusPractice={handleBonusPractice}
+                    onSettings={() => setShowSettings(true)}
+                />
+            </div>
+        );
+    }
+
     if (allCards.length === 0 || !currentMission) {
         return <div className="loading">Loading...</div>;
     }
@@ -323,6 +380,31 @@ export function Game() {
     const missionSuccessful = isMissionSuccessful(currentMission.progress);
 
     if (missionComplete) {
+        // If this was bonus practice and there are still no due cards, show AllCaughtUp
+        if (isBonusMode) {
+            const dueCards = selectCards(allCards, settings.cardsPerSession);
+            if (dueCards.length === 0) {
+                // Still no due cards - show AllCaughtUp again
+                const nextDue = getNextDueTime(allCards);
+                return (
+                    <div className="game">
+                        <div className="game-header">
+                            <h1>Meow Facts</h1>
+                            <SparklesCounter sparkles={sparkles.total} recentlyEarned={0} />
+                            <button onClick={() => setShowSettings(true)} className="settings-button">
+                                ⚙️
+                            </button>
+                        </div>
+                        <AllCaughtUp
+                            nextDueTime={nextDue}
+                            onBonusPractice={handleBonusPractice}
+                            onSettings={() => setShowSettings(true)}
+                        />
+                    </div>
+                );
+            }
+        }
+
         // Call complete handler if not already called
         if (missionSuccessful && !currentMission.completedAt) {
             handleMissionComplete();
@@ -386,7 +468,7 @@ export function Game() {
     return (
         <div className="game">
             <div className="game-header">
-                <h1>Meow Facts</h1>
+                <h1>Meow Facts{isBonusMode && <span className="bonus-badge">Bonus Practice!</span>}</h1>
                 <SparklesCounter sparkles={sparkles.total} recentlyEarned={recentlyEarnedSparkles} />
                 <button onClick={() => setShowSettings(true)} className="settings-button">
                     ⚙️
