@@ -67,7 +67,7 @@ export function Settings({ settings, onSettingsChange, onClose }: SettingsProps)
     return (
         <div className="settings-overlay">
             <div className="settings-panel">
-                <h2>Choose Numbers to Practice</h2>
+                <h2>Settings</h2>
 
                 <p className="settings-description">
                     Select which numbers to practice. You'll get facts involving those numbers.
