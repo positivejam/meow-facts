@@ -69,57 +69,56 @@ export function Settings({ settings, onSettingsChange, onClose }: SettingsProps)
             <div className="settings-panel">
                 <h2>Settings</h2>
 
-                <p className="settings-description">
-                    Select which numbers to practice. You'll get facts involving those numbers.
-                </p>
+                <div className="settings-section">
+                    <h3>Numbers to Practice</h3>
+                    <p className="settings-description">
+                        Select which numbers to practice. You'll get facts involving those numbers.
+                    </p>
+
+                    <div className="checkbox-grid">
+                        {allNumbers.map(num => (
+                            <label key={num} className="checkbox-item">
+                                <input
+                                    type="checkbox"
+                                    checked={currentEnabled.includes(num)}
+                                    onChange={() => toggleNumber(num)}
+                                />
+                                <span className="checkbox-label">{num}</span>
+                            </label>
+                        ))}
+                    </div>
+
+                    <div className="settings-actions">
+                        <button onClick={selectAll} className="action-button">
+                            Select All
+                        </button>
+                        <button onClick={clearAll} className="action-button">
+                            Clear All
+                        </button>
+                    </div>
+                </div>
 
                 <div className="settings-section">
-                    <label htmlFor="maxNumber" className="settings-label">
-                        Maximum Number to Combine With:
-                    </label>
+                    <h3>Maximum Number to Combine With</h3>
+                    <p className="settings-hint">
+                        Selected numbers will be combined with 0 through {settings.maxNumber}
+                    </p>
                     <select
                         id="maxNumber"
                         value={settings.maxNumber}
                         onChange={(e) => handleMaxNumberChange(Number(e.target.value))}
                         className="max-number-select"
+                        aria-label="Maximum number"
                     >
                         {Array.from({ length: 13 }, (_, i) => (
                             <option key={i} value={i}>{i}</option>
                         ))}
                     </select>
-                    <p className="settings-hint">
-                        Selected numbers below will be combined with 0 through {settings.maxNumber}
-                    </p>
-                </div>
-
-                <div className="checkbox-grid">
-                    {allNumbers.map(num => (
-                        <label key={num} className="checkbox-item">
-                            <input
-                                type="checkbox"
-                                checked={currentEnabled.includes(num)}
-                                onChange={() => toggleNumber(num)}
-                            />
-                            <span className="checkbox-label">{num}</span>
-                        </label>
-                    ))}
-                </div>
-
-                <div className="settings-actions">
-                    <button onClick={selectAll} className="action-button">
-                        Select All
-                    </button>
-                    <button onClick={clearAll} className="action-button">
-                        Clear All
-                    </button>
                 </div>
 
                 <div className="settings-info">
                     <p className="facts-count">
                         {factCount} math facts selected
-                    </p>
-                    <p className="selected-numbers">
-                        Selected numbers: {currentEnabled.join(', ')}
                     </p>
                 </div>
 
