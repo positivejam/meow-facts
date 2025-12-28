@@ -6,6 +6,7 @@ interface AllCaughtUpProps {
 
 export function AllCaughtUp({ nextDueTime, onBonusPractice, onSettings }: AllCaughtUpProps) {
     const formatNextDue = (timestamp: number): string => {
+        // eslint-disable-next-line react-hooks/purity
         const now = Date.now();
         const diffMs = timestamp - now;
         const diffMinutes = Math.floor(diffMs / (1000 * 60));
