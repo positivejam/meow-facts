@@ -192,6 +192,103 @@ describe('Game - Critical User Flows', () => {
                 expect(savedSettings?.maxNumber).toBe(10);
             });
         });
+
+        it('should display fact count of 169 when all numbers are checked and max number is set to 12', async () => {
+            const user = userEvent.setup({ delay: null });
+            render(<Game />);
+
+            // Open settings
+            await waitFor(() => {
+                expect(screen.getByRole('button', { name: /⚙️|settings/i })).toBeInTheDocument();
+            });
+            await user.click(screen.getByRole('button', { name: /⚙️|settings/i }));
+
+            // Wait for settings screen
+            await waitFor(() => {
+                expect(screen.getByText(/settings/i)).toBeInTheDocument();
+            });
+
+            // Select all numbers)
+            await user.click(screen.getByRole('button', { name: /select all/i }));
+
+            // Verify checkboxes 0 and 5 are checked
+            await waitFor(() => {
+                const checkbox0 = screen.getByLabelText('0') as HTMLInputElement;
+                const checkbox1 = screen.getByLabelText('1') as HTMLInputElement;
+                const checkbox2 = screen.getByLabelText('2') as HTMLInputElement;
+                const checkbox3 = screen.getByLabelText('3') as HTMLInputElement;
+                const checkbox4 = screen.getByLabelText('4') as HTMLInputElement;
+                const checkbox5 = screen.getByLabelText('5') as HTMLInputElement;
+                const checkbox6 = screen.getByLabelText('6') as HTMLInputElement;
+                const checkbox7 = screen.getByLabelText('7') as HTMLInputElement;
+                const checkbox8 = screen.getByLabelText('8') as HTMLInputElement;
+                const checkbox9 = screen.getByLabelText('9') as HTMLInputElement;
+                const checkbox10 = screen.getByLabelText('10') as HTMLInputElement;
+                const checkbox11 = screen.getByLabelText('11') as HTMLInputElement;
+                const checkbox12 = screen.getByLabelText('12') as HTMLInputElement;
+                expect(checkbox0.checked).toBe(true);
+                expect(checkbox1.checked).toBe(true);
+                expect(checkbox2.checked).toBe(true);
+                expect(checkbox3.checked).toBe(true);
+                expect(checkbox4.checked).toBe(true);
+                expect(checkbox5.checked).toBe(true);
+                expect(checkbox6.checked).toBe(true);
+                expect(checkbox7.checked).toBe(true);
+                expect(checkbox8.checked).toBe(true);
+                expect(checkbox9.checked).toBe(true);
+                expect(checkbox10.checked).toBe(true);
+                expect(checkbox11.checked).toBe(true);
+                expect(checkbox12.checked).toBe(true);
+            });
+
+            // Set max number to 12
+            const maxNumberSelect = screen.getByLabelText(/maximum number/i);
+            await user.selectOptions(maxNumberSelect, '12');
+
+            // Should see "169 math facts selected"
+            await waitFor(() => {
+                expect(screen.getByText('169 math facts selected')).toBeInTheDocument();
+            });
+        });
+
+        it('should display correct fact count based on selected numbers and max number', async () => {
+            const user = userEvent.setup({ delay: null });
+            render(<Game />);
+
+            // Open settings
+            await waitFor(() => {
+                expect(screen.getByRole('button', { name: /⚙️|settings/i })).toBeInTheDocument();
+            });
+            await user.click(screen.getByRole('button', { name: /⚙️|settings/i }));
+
+            // Wait for settings screen
+            await waitFor(() => {
+                expect(screen.getByText(/settings/i)).toBeInTheDocument();
+            });
+
+            // Clear all numbers (this will set to [0])
+            await user.click(screen.getByRole('button', { name: /clear all/i }));
+
+            // Check the checkbox for 5
+            const checkbox5 = screen.getByLabelText('5') as HTMLInputElement;
+            await user.click(checkbox5);
+
+            // Verify checkboxes 0 and 5 are checked
+            await waitFor(() => {
+                const checkbox0 = screen.getByLabelText('0') as HTMLInputElement;
+                expect(checkbox0.checked).toBe(true);
+                expect(checkbox5.checked).toBe(true);
+            });
+
+            // Set max number to 5
+            const maxNumberSelect = screen.getByLabelText(/maximum number/i);
+            await user.selectOptions(maxNumberSelect, '5');
+
+            // Should see "20 math facts selected"
+            await waitFor(() => {
+                expect(screen.getByText('20 math facts selected')).toBeInTheDocument();
+            });
+        });
     });
 
     describe('All Caught Up Screen', () => {
