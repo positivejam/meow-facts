@@ -55,14 +55,34 @@ export function Settings({ settings, onSettingsChange, onClose }: SettingsProps)
         });
     };
 
-    const currentEnabled = settings.enabledNumbers || allNumbers;
+    function cartesianProduct(setA: number[], setB: number[]) {
+        return setA.flatMap(a => setB.map(b => [a, b]));
+    }
+
+    /**
+     * The symmetrical Cartesian product of 2 sets creates a set of sets where every number from each
+     * set is paired with every number from the other set, including reverse order of each, but w/o duplicates
+     */
+    function symmetricCartesianProduct(setA: number[], setB: number[]) {
+        const axb = cartesianProduct(setA, setB);
+        const bxa = cartesianProduct(setB, setA);
+
+        // Remove duplicates
+        const unique = new Map();
+        [...axb, ...bxa].forEach(pair => {
+            unique.set(JSON.stringify(pair), pair);
+        });
+
+        return Array.from(unique.values());
+    }
+
     const targetTimeSeconds = settings.targetTime / 1000;
 
-    // Calculate number of facts: for k selected numbers and max M,
-    // we get k * (2 * (M + 1) - k) facts
-    const k = currentEnabled.length;
-    const M = settings.maxNumber;
-    const factCount = k * (2 * (M + 1) - k);
+    // Calculate number of facts
+    // Ex. if maxNumber select list is set to '5', zeroToMaxNumArray = [0,1,2,3,4,5]
+    const zeroToMaxNumArray = Array.from({ length: settings.maxNumber + 1 }, (_, i) => i);
+    const currentChecked = settings.enabledNumbers || allNumbers;
+    const factCount = symmetricCartesianProduct(zeroToMaxNumArray, currentChecked).length;
 
     return (
         <div className="settings-overlay">
@@ -80,7 +100,7 @@ export function Settings({ settings, onSettingsChange, onClose }: SettingsProps)
                             <label key={num} className="checkbox-item">
                                 <input
                                     type="checkbox"
-                                    checked={currentEnabled.includes(num)}
+                                    checked={currentChecked.includes(num)}
                                     onChange={() => toggleNumber(num)}
                                 />
                                 <span className="checkbox-label">{num}</span>
