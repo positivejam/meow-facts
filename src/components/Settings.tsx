@@ -55,7 +55,7 @@ export function Settings({ settings, onSettingsChange, onClose }: SettingsProps)
         });
     };
 
-    function cartesianProduct(setA: number[], setB: number[]) {
+    function cartesianProduct(setA: number[], setB: number[]): number[][] {
         return setA.flatMap(a => setB.map(b => [a, b]));
     }
 
@@ -63,7 +63,7 @@ export function Settings({ settings, onSettingsChange, onClose }: SettingsProps)
      * The symmetrical Cartesian product of 2 sets creates a set of sets where every number from each
      * set is paired with every number from the other set, including reverse order of each, but w/o duplicates
      */
-    function symmetricCartesianProduct(setA: number[], setB: number[]) {
+    function symmetricCartesianProduct(setA: number[], setB: number[]): number[][] {
         const axb = cartesianProduct(setA, setB);
         const bxa = cartesianProduct(setB, setA);
 
@@ -82,7 +82,8 @@ export function Settings({ settings, onSettingsChange, onClose }: SettingsProps)
     // Ex. if maxNumber select list is set to '5', zeroToMaxNumArray = [0,1,2,3,4,5]
     const zeroToMaxNumArray = Array.from({ length: settings.maxNumber + 1 }, (_, i) => i);
     const currentChecked = settings.enabledNumbers || allNumbers;
-    const factCount = symmetricCartesianProduct(zeroToMaxNumArray, currentChecked).length;
+    const facts = symmetricCartesianProduct(zeroToMaxNumArray, currentChecked);
+    const factCount = facts.length;
 
     return (
         <div className="settings-overlay">
