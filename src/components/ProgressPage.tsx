@@ -51,7 +51,16 @@ export function ProgressPage({ cards, onClose }: ProgressPageProps) {
                 {!isAllComplete && (
                     <div className="progress-section">
                         <h3>Current Level: {currentLevel}s</h3>
+                        <div className="progress-markers">
+                            <div className="progress-marker red" style={{ left: '0%' }}>▼</div>
+                            <div className="progress-marker orange" style={{ left: '25%' }}>▼</div>
+                            <div className="progress-marker green" style={{ left: '50%' }}>▼</div>
+                            <div className="progress-marker blue" style={{ left: '75%' }}>▼</div>
+                        </div>
                         <div className="secondary-progress-bar">
+                            <div className="progress-bar-marker-line orange" style={{ left: '25%' }} />
+                            <div className="progress-bar-marker-line green" style={{ left: '50%' }} />
+                            <div className="progress-bar-marker-line blue" style={{ left: '75%' }} />
                             <div
                                 className={`secondary-progress-fill ${currentLevelProgress.color}`}
                                 style={{ width: `${Math.max(currentLevelProgress.masteryPercent, 2)}%` }}

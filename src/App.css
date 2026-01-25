@@ -1039,13 +1039,47 @@
 }
 
 /* Secondary Progress Bar (single bar with color) */
+/* Progress bar threshold markers */
+.progress-markers {
+    position: relative;
+    height: 20px;
+    margin-bottom: 4px;
+}
+
+.progress-marker {
+    position: absolute;
+    transform: translateX(-50%);
+    font-size: 14px;
+    line-height: 1;
+}
+
+.progress-marker.red { color: #ef4444; }
+.progress-marker.orange { color: #f97316; }
+.progress-marker.green { color: #22c55e; }
+.progress-marker.blue { color: #3b82f6; }
+
 .secondary-progress-bar {
+    position: relative;
     height: 36px;
     background: #e0e0e0;
     border-radius: 8px;
     overflow: hidden;
-    margin: 16px 0;
+    margin-top: 0;
+    margin-bottom: 16px;
 }
+
+.progress-bar-marker-line {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    border-left: 2px dotted;
+    z-index: 1;
+}
+
+.progress-bar-marker-line.orange { border-left-color: #f97316; }
+.progress-bar-marker-line.green { border-left-color: #22c55e; }
+.progress-bar-marker-line.blue { border-left-color: #3b82f6; }
 
 .secondary-progress-fill {
     height: 100%;
