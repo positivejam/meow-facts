@@ -17,6 +17,7 @@ import { AnimalDisplay } from './AnimalDisplay';
 import { CompanionScene } from './CompanionScene';
 import { AllCaughtUp } from './AllCaughtUp';
 import { GameHeader } from './GameHeader';
+import { ProgressPage } from './ProgressPage';
 
 const DEFAULT_SETTINGS: GameSettings = {
     operation: 'addition',
@@ -37,6 +38,7 @@ export function Game() {
     // eslint-disable-next-line react-hooks/purity
     const [problemStartTime, setProblemStartTime] = useState(Date.now());
     const [showSettings, setShowSettings] = useState(false);
+    const [showProgress, setShowProgress] = useState(false);
 
     // Rescue game state
     const [currentMission, setCurrentMission] = useState<RescueMission | null>(null);
@@ -339,6 +341,15 @@ export function Game() {
         );
     }
 
+    if (showProgress) {
+        return (
+            <ProgressPage
+                cards={allCards}
+                onClose={() => setShowProgress(false)}
+            />
+        );
+    }
+
     if (showAllCaughtUp) {
         const nextDue = getNextDueTime(allCards);
         return (
@@ -347,6 +358,7 @@ export function Game() {
                     sparklesTotal={sparkles.total}
                     recentlyEarned={0}
                     onSettingsClick={() => setShowSettings(true)}
+                    onProgressClick={() => setShowProgress(true)}
                 />
                 <AllCaughtUp
                     nextDueTime={nextDue}
@@ -381,6 +393,7 @@ export function Game() {
                         sparklesTotal={sparkles.total}
                         recentlyEarned={0}
                         onSettingsClick={() => setShowSettings(true)}
+                        onProgressClick={() => setShowProgress(true)}
                     />
                     <AllCaughtUp
                         nextDueTime={nextDue}
@@ -458,6 +471,7 @@ export function Game() {
                 recentlyEarned={recentlyEarnedSparkles}
                 isBonusMode={isBonusMode}
                 onSettingsClick={() => setShowSettings(true)}
+                onProgressClick={() => setShowProgress(true)}
             />
 
             {showMissionIntro ? (

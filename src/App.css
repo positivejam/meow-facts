@@ -955,6 +955,136 @@
     align-items: start;
 }
 
+/* Progress Page */
+.progress-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.progress-panel {
+    background: white;
+    border-radius: 24px;
+    padding: 40px;
+    max-width: 500px;
+    width: 100%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    text-align: center;
+    box-sizing: border-box;
+}
+
+.progress-panel h1 {
+    color: #667eea;
+    font-size: 2rem;
+    margin: 0 0 30px 0;
+    font-weight: 800;
+}
+
+.progress-section {
+    margin-bottom: 30px;
+}
+
+.progress-section h3 {
+    color: #333;
+    font-size: 1.1rem;
+    margin: 0 0 12px 0;
+    font-weight: 700;
+}
+
+.progress-section p {
+    color: #666;
+    font-size: 0.95rem;
+    margin: 8px 0 0 0;
+}
+
+/* Primary Progress Bar (13 segments) */
+.primary-progress-bar {
+    display: flex;
+    gap: 4px;
+    margin: 16px 0;
+}
+
+.primary-progress-segment {
+    flex: 1;
+    height: 28px;
+    background: #e0e0e0;
+    border-radius: 4px;
+    transition: background 0.3s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #999;
+}
+
+.primary-progress-segment.completed {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.primary-progress-segment.current {
+    border: 2px solid #667eea;
+    background: #f0f4ff;
+    color: #667eea;
+}
+
+/* Secondary Progress Bar (single bar with color) */
+.secondary-progress-bar {
+    height: 36px;
+    background: #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    margin: 16px 0;
+}
+
+.secondary-progress-fill {
+    height: 100%;
+    transition: width 0.5s ease-out, background 0.3s;
+    border-radius: 8px;
+    min-width: 8px;
+}
+
+.secondary-progress-fill.red {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.secondary-progress-fill.orange {
+    background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+}
+
+.secondary-progress-fill.green {
+    background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);
+}
+
+.secondary-progress-fill.blue {
+    background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+}
+
+/* Header progress button */
+.progress-button {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 8px;
+    border-radius: 8px;
+    transition: background 0.2s;
+}
+
+.progress-button:hover {
+    background: rgba(102, 126, 234, 0.1);
+}
+
 /* Responsive */
 @media (max-width: 640px) {
     .app {
