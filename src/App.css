@@ -1018,12 +1018,13 @@
     height: 28px;
     background: #e0e0e0;
     border-radius: 4px;
-    transition: background 0.3s;
+    transition: background 0.3s, opacity 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
     font-size: 0.7rem;
     font-weight: 600;
+    cursor: pointer;
     color: #999;
 }
 
@@ -1036,6 +1037,14 @@
     border: 2px solid #667eea;
     background: #f0f4ff;
     color: #667eea;
+}
+
+.primary-progress-segment:hover {
+    opacity: 0.8;
+}
+
+.primary-progress-segment.selected {
+    box-shadow: 0 0 0 2px #667eea;
 }
 
 /* Secondary Progress Bar (single bar with color) */

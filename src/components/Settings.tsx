@@ -1,4 +1,5 @@
 import type { GameSettings } from '../types/game';
+import { MAX_LEVEL } from '../constants';
 
 interface SettingsProps {
     settings: GameSettings;
@@ -7,9 +8,8 @@ interface SettingsProps {
 }
 
 export function Settings({ settings, onSettingsChange, onClose }: SettingsProps) {
-    // Fixed range for checkboxes - independent of maxNumber setting
-    const MAX_CHECKBOX_NUMBER = 12;
-    const allNumbers = Array.from({ length: MAX_CHECKBOX_NUMBER + 1 }, (_, i) => i);
+    // Fixed range for checkboxes - all levels 0 through MAX_LEVEL
+    const allNumbers = Array.from({ length: MAX_LEVEL + 1 }, (_, i) => i);
 
     const toggleNumber = (num: number) => {
         const currentEnabled = settings.enabledNumbers || allNumbers;

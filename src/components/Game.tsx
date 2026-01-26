@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { MathFactCard, GameSettings, ProblemAttempt, RescueMission, SparklesData, SunshineDialogueType } from '../types/game';
+import { MAX_LEVEL } from '../constants';
 import { generateAllFacts } from '../utils/cardGenerator';
 import { selectCards, updateCard, selectBonusCards, getNextDueTime } from '../utils/spacedRepetition';
 import { saveProgress, loadProgress, saveRescueProgress, loadRescueProgress, loadSettings, saveSettings, loadSparkles as loadSparklesFromDB, saveSparkles as saveSparklesToDB } from '../utils/storage-dexie';
@@ -21,9 +22,9 @@ import { ProgressPage } from './ProgressPage';
 
 const DEFAULT_SETTINGS: GameSettings = {
     operation: 'addition',
-    maxNumber: 12,
+    maxNumber: MAX_LEVEL,
     cardsPerSession: 10,
-    enabledNumbers: Array.from({ length: 13 }, (_, i) => i), // All numbers 0-12
+    enabledNumbers: Array.from({ length: MAX_LEVEL + 1 }, (_, i) => i), // All numbers 0-MAX_LEVEL
     targetTime: 5000, // 5 seconds
 };
 

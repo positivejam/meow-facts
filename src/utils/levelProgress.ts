@@ -1,4 +1,5 @@
 import type { MathFactCard } from '../types/game';
+import { MAX_LEVEL } from '../constants';
 
 export type MasteryColor = 'red' | 'orange' | 'green' | 'blue';
 
@@ -43,27 +44,27 @@ function getColorForPercent(percent: number): MasteryColor {
 }
 
 /**
+ * Calculates the total number of possible facts for a level.
+ * For level L with maxNumber M, facts are: L+0..L+M and 0+L..M+L
+ * Excluding the duplicate L+L, total = 2*(M+1) - 1 = 2*M + 1
+ */
+function getTotalPossibleFactsForLevel(maxNumber: number): number {
+  return 2 * maxNumber + 1;
+}
+
+/**
  * Calculates mastery percentage for a single level.
  * A fact is considered "mastered" if its nextReview is >= 2 weeks in the future.
+ * totalFacts is the total possible facts for the level, not just cards that exist.
  */
 export function calculateLevelMastery(
   cards: MathFactCard[],
   level: number,
+  maxNumber: number = MAX_LEVEL,
   now: number = Date.now()
 ): LevelMasteryResult {
   const levelFacts = getFactsForLevel(cards, level);
-  const totalFacts = levelFacts.length;
-
-  if (totalFacts === 0) {
-    return {
-      level,
-      totalFacts: 0,
-      masteredFacts: 0,
-      masteryPercent: 0,
-      color: 'red',
-      isComplete: false,
-    };
-  }
+  const totalFacts = getTotalPossibleFactsForLevel(maxNumber);
 
   const twoWeeksFromNow = now + TWO_WEEKS_MS;
   const masteredFacts = levelFacts.filter(
@@ -90,13 +91,13 @@ export function calculateLevelMastery(
  */
 export function calculateOverallProgress(
   cards: MathFactCard[],
-  maxLevel: number = 12,
+  maxLevel: number = MAX_LEVEL,
   now: number = Date.now()
 ): OverallProgressResult {
   const allLevelProgress: LevelMasteryResult[] = [];
 
   for (let level = 0; level <= maxLevel; level++) {
-    allLevelProgress.push(calculateLevelMastery(cards, level, now));
+    allLevelProgress.push(calculateLevelMastery(cards, level, maxLevel, now));
   }
 
   // Find completed levels (must be sequential from 0)
