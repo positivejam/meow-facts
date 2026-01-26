@@ -31,6 +31,26 @@ export const SUNSHINE_PHRASES = {
         "Perfect! The kitten is rescued and feeling great!",
         "Wonderful! The kitten is all warmed up thanks to you!",
     ],
+    'milestone-orange': [
+        "You're making progress on your {level}s! Keep it up!",
+        "Nice! Your {level}s facts are getting stronger!",
+        "You're building momentum with those {level}s!",
+    ],
+    'milestone-green': [
+        "Halfway there on your {level}s! You're doing amazing!",
+        "Wow! You've reached 50% mastery on your {level}s!",
+        "Your {level}s facts are really clicking now!",
+    ],
+    'milestone-blue': [
+        "You're almost a {level}s expert! 75% mastered!",
+        "Incredible progress on your {level}s! Nearly there!",
+        "Your {level}s facts are becoming second nature!",
+    ],
+    'milestone-mastered': [
+        "You've MASTERED your {level}s facts! Amazing!",
+        "100% on your {level}s! You're a math superstar!",
+        "Perfect mastery of your {level}s! Incredible work!",
+    ],
 } as const;
 
 function getOperationSymbol(operation: Operation): string {
@@ -49,14 +69,19 @@ function formatProblemEquation(problem: MathProblem): string {
 
 export function getSunshineDialogue(
     type: SunshineDialogueType,
-    problem?: MathProblem
+    problem?: MathProblem,
+    level?: number
 ): string {
     const phrases = SUNSHINE_PHRASES[type];
-    const phrase = phrases[Math.floor(Math.random() * phrases.length)];
+    let phrase: string = phrases[Math.floor(Math.random() * phrases.length)];
 
     if (type === 'incorrect' && problem !== undefined) {
         const equation = formatProblemEquation(problem);
-        return phrase.replace('{equation}', equation);
+        phrase = phrase.replace('{equation}', equation);
+    }
+
+    if (level !== undefined) {
+        phrase = phrase.replace('{level}', String(level));
     }
 
     return phrase;

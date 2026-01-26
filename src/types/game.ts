@@ -86,7 +86,16 @@ export interface SparklesData {
   earnedThisSession: number;
 }
 
-export type SunshineDialogueType = 'intro' | 'fast-correct' | 'slow-correct' | 'incorrect' | 'rescue-complete';
+export type SunshineDialogueType =
+  | 'intro'
+  | 'fast-correct'
+  | 'slow-correct'
+  | 'incorrect'
+  | 'rescue-complete'
+  | 'milestone-orange'
+  | 'milestone-green'
+  | 'milestone-blue'
+  | 'milestone-mastered';
 
 export interface SunshineDialogue {
   type: SunshineDialogueType;

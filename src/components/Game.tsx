@@ -19,6 +19,8 @@ import { CompanionScene } from './CompanionScene';
 import { AllCaughtUp } from './AllCaughtUp';
 import { GameHeader } from './GameHeader';
 import { ProgressPage } from './ProgressPage';
+import { MilestoneBadge } from './MilestoneBadge';
+import { useMasteryMilestones, type MasteryMilestone } from '../hooks/useMasteryMilestones';
 
 const DEFAULT_SETTINGS: GameSettings = {
     operation: 'addition',
@@ -51,6 +53,8 @@ export function Game() {
     const [displayedProgress, setDisplayedProgress] = useState(0); // For animated progress changes
     const [isBonusMode, setIsBonusMode] = useState(false);
     const [showAllCaughtUp, setShowAllCaughtUp] = useState(false);
+    const [achievedMilestones, setAchievedMilestones] = useState<MasteryMilestone[]>([]);
+    const { capturePreMissionState, getMilestonesAchieved } = useMasteryMilestones();
 
     // Load settings from Dexie on mount
     useEffect(() => {
@@ -79,6 +83,9 @@ export function Game() {
     }, []);
 
     const startNewMission = useCallback(async (selectNewCards = false) => {
+        // Clear previous milestones
+        setAchievedMilestones([]);
+
         // Select new cards only when starting a new mission after completing one
         // (not on initial load, since useEffect already selects cards)
         if (selectNewCards) {
@@ -86,8 +93,11 @@ export function Game() {
             setSessionCards(selected);
         }
 
+        // Capture mastery state before mission for milestone detection
+        capturePreMissionState(allCards);
+
         await initializeMissionState();
-    }, [allCards, settings, initializeMissionState]);
+    }, [allCards, settings, initializeMissionState, capturePreMissionState]);
 
     // Initialize cards and mission when settings change
     useEffect(() => {
@@ -136,6 +146,9 @@ export function Game() {
                 setShowAllCaughtUp(false);
                 setIsBonusMode(false);
 
+                // Capture mastery state before mission for milestone detection
+                capturePreMissionState(cardsToUse);
+
                 // Initialize a new mission
                 await initializeMissionState();
             }
@@ -146,7 +159,7 @@ export function Game() {
         };
 
         initializeCards();
-    }, [settings, initializeMissionState]);
+    }, [settings, initializeMissionState, capturePreMissionState]);
 
     const handleAcceptMission = () => {
         setShowMissionIntro(false);
@@ -286,12 +299,20 @@ export function Game() {
                 completedMissions: [...rescueData.completedMissions, currentMission],
                 currentMission: null,
             });
-        }
 
-        // Show appropriate dialogue
-        if (successful) {
-            setSunshineDialogueType('rescue-complete');
-            setSunshineDialogue(getSunshineDialogue('rescue-complete'));
+            // Calculate milestones achieved during this mission
+            const milestones = getMilestonesAchieved(allCards);
+            setAchievedMilestones(milestones);
+
+            // Show appropriate dialogue - use milestone dialogue if milestones achieved
+            if (milestones.length > 0) {
+                const milestoneType = `milestone-${milestones[0].milestone}` as SunshineDialogueType;
+                setSunshineDialogueType(milestoneType);
+                setSunshineDialogue(getSunshineDialogue(milestoneType, undefined, milestones[0].level));
+            } else {
+                setSunshineDialogueType('rescue-complete');
+                setSunshineDialogue(getSunshineDialogue('rescue-complete'));
+            }
         }
     };
 
@@ -411,7 +432,9 @@ export function Game() {
         }
 
         const completeDialogue = missionSuccessful
-            ? getMissionCompleteDialogue(currentMission)
+            ? (achievedMilestones.length > 0
+                ? getSunshineDialogue(`milestone-${achievedMilestones[0].milestone}` as SunshineDialogueType, undefined, achievedMilestones[0].level)
+                : getMissionCompleteDialogue(currentMission))
             : `Great effort! ${currentMission.animalName} appreciates your help. Ready to try again?`;
 
         return (
@@ -431,6 +454,7 @@ export function Game() {
                     {missionSuccessful && (
                         <>
                             <StatsDisplay attempts={attempts} targetTime={settings.targetTime} />
+                            <MilestoneBadge milestones={achievedMilestones} />
                             <div className="sparkles-earned">
                                 ✨ Earned {sparkles.earnedThisSession} sparkles this session!
                             </div>
