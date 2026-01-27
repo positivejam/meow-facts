@@ -54,6 +54,7 @@ export function Game() {
     const [isBonusMode, setIsBonusMode] = useState(false);
     const [showAllCaughtUp, setShowAllCaughtUp] = useState(false);
     const [achievedMilestones, setAchievedMilestones] = useState<MasteryMilestone[]>([]);
+    const [previouslyMasteredLevels, setPreviouslyMasteredLevels] = useState<Set<number>>(new Set());
     const { capturePreMissionState, getMilestonesAchieved } = useMasteryMilestones();
 
     // Load settings from Dexie on mount
@@ -156,6 +157,12 @@ export function Game() {
             // Load sparkles
             const loadedSparkles = await loadSparklesFromDB();
             setSparkles(loadedSparkles);
+
+            // Load previously mastered levels from unlock status
+            const rescueData = await loadRescueProgress();
+            setPreviouslyMasteredLevels(new Set(
+                rescueData.unlockStatus.masteredFactGroups.map(s => parseInt(s, 10))
+            ));
         };
 
         initializeCards();
@@ -301,8 +308,30 @@ export function Game() {
             });
 
             // Calculate milestones achieved during this mission
-            const milestones = getMilestonesAchieved(allCards);
+            // Pass previouslyMasteredLevels to suppress repeated 100% celebrations
+            const milestones = getMilestonesAchieved(allCards, previouslyMasteredLevels);
             setAchievedMilestones(milestones);
+
+            // Save newly mastered levels (first time reaching 100%)
+            const newlyMastered = milestones
+                .filter(m => m.milestone === 'mastered')
+                .map(m => m.level);
+
+            if (newlyMastered.length > 0) {
+                // Update local state
+                const updatedSet = new Set(previouslyMasteredLevels);
+                newlyMastered.forEach(level => updatedSet.add(level));
+                setPreviouslyMasteredLevels(updatedSet);
+
+                // Persist to database
+                const updatedGroups = [...updatedSet].map(String);
+                await saveRescueProgress({
+                    unlockStatus: {
+                        ...rescueData.unlockStatus,
+                        masteredFactGroups: updatedGroups,
+                    }
+                });
+            }
 
             // Show appropriate dialogue - use milestone dialogue if milestones achieved
             if (milestones.length > 0) {

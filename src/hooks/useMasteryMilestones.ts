@@ -40,7 +40,11 @@ export function useMasteryMilestones() {
   }, []);
 
   // Call this when mission completes - returns milestones achieved
-  const getMilestonesAchieved = useCallback((cards: MathFactCard[]): MasteryMilestone[] => {
+  // Pass previouslyMasteredLevels to suppress repeated 100% celebrations
+  const getMilestonesAchieved = useCallback((
+    cards: MathFactCard[],
+    previouslyMasteredLevels?: Set<number>
+  ): MasteryMilestone[] => {
     const progress = calculateOverallProgress(cards, MAX_LEVEL);
     const milestones: MasteryMilestone[] = [];
 
@@ -50,6 +54,11 @@ export function useMasteryMilestones() {
 
       // Check each threshold from highest to lowest
       for (const { percent, milestone } of THRESHOLDS) {
+        // Skip mastery (100%) celebration if level was previously mastered
+        if (milestone === 'mastered' && previouslyMasteredLevels?.has(levelProgress.level)) {
+          continue;
+        }
+
         if (preMastery < percent && postMastery >= percent) {
           milestones.push({
             level: levelProgress.level,
