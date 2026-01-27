@@ -337,8 +337,8 @@ describe('Game - Critical User Flows', () => {
                 await user.type(input, '0');
                 await user.click(screen.getByRole('button', { name: /submit/i }));
 
-                // Check if mission is complete
-                const missionComplete = await screen.findByText(/all caught up/i, {}, { timeout: 500 })
+                // Check if mission complete screen shows
+                const missionComplete = await screen.findByText(/mission complete/i, {}, { timeout: 500 })
                     .then(() => true)
                     .catch(() => false);
 
@@ -350,6 +350,14 @@ describe('Game - Critical User Flows', () => {
                 const continueButton = await screen.findByRole('button', { name: /continue/i });
                 await user.click(continueButton);
             }
+
+            // Should see mission complete screen first
+            await waitFor(() => {
+                expect(screen.getByText(/mission complete/i)).toBeInTheDocument();
+            });
+
+            // Click "Help Another Animal" to trigger AllCaughtUp detection
+            await user.click(screen.getByRole('button', { name: /help another animal/i }));
 
             // Should see all caught up
             await waitFor(() => {

@@ -91,6 +91,14 @@ export function Game() {
         // (not on initial load, since useEffect already selects cards)
         if (selectNewCards) {
             const selected = selectCards(allCards, settings.cardsPerSession);
+            if (selected.length === 0) {
+                // No due cards - show "all caught up" screen
+                setSessionCards([]);
+                setShowAllCaughtUp(true);
+                setIsBonusMode(false);
+                setCurrentMission(null);
+                return;
+            }
             setSessionCards(selected);
         }
 
@@ -433,28 +441,6 @@ export function Game() {
     const missionSuccessful = isMissionSuccessful(currentMission.progress);
 
     if (missionComplete) {
-        // Check if there are no more due cards (regardless of bonus mode)
-        const dueCards = selectCards(allCards, settings.cardsPerSession);
-        if (dueCards.length === 0) {
-            // No more due cards - show AllCaughtUp screen
-            const nextDue = getNextDueTime(allCards);
-            return (
-                <div className="game">
-                    <GameHeader
-                        sparklesTotal={sparkles.total}
-                        recentlyEarned={0}
-                        onSettingsClick={() => setShowSettings(true)}
-                        onProgressClick={() => setShowProgress(true)}
-                    />
-                    <AllCaughtUp
-                        nextDueTime={nextDue}
-                        onBonusPractice={handleBonusPractice}
-                        onSettings={() => setShowSettings(true)}
-                    />
-                </div>
-            );
-        }
-
         // Call complete handler if not already called
         if (missionSuccessful && !currentMission.completedAt) {
             handleMissionComplete();
