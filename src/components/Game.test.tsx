@@ -1,10 +1,20 @@
-import { describe, it, expect, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Game } from './Game';
 import { db } from '../utils/db';
 
-// Helper to clear the database before each test
+// Clean up DOM and close db after each test to prevent race conditions.
+// cleanup() unmounts synchronously, but useEffect async operations (loadSparkles,
+// loadRescueProgress) are already in flight as microtasks. The setTimeout(0) delays
+// db.close() until after those microtasks complete, preventing "DatabaseClosedError".
+afterEach(async () => {
+    cleanup();
+    await new Promise(resolve => setTimeout(resolve, 0));
+    await db.close();
+});
+
+// Clear and reopen database before each test
 beforeEach(async () => {
     await db.delete();
     await db.open();
