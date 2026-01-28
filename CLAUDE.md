@@ -29,6 +29,12 @@ npm run test:ui
 
 # Run tests once (for CI)
 npm run test:run
+
+# Run a single test file
+npm run test -- src/components/Game.test.tsx
+
+# Run tests matching a pattern
+npm run test -- -t "shows mission intro"
 ```
 
 ## Testing
@@ -39,6 +45,7 @@ npm run test:run
 - **Test environment**: jsdom with fake-indexeddb for realistic IndexedDB simulation
 - **Debugging**: VS Code launch configurations in `.vscode/launch.json` for debugging tests
 - **Performance**: Tests use `userEvent.setup({ delay: null })` to remove typing delays
+- **Database cleanup**: `Game.test.tsx` handles its own `afterEach` cleanup with `db.close()` to prevent race conditions with IndexedDB. Other test files rely on the global cleanup in `src/test/setup.ts`.
 
 ## Architecture
 
@@ -75,9 +82,12 @@ Settings are stored separately from card progress:
 
 **Database schema** (`db.ts`):
 - `cards` table: Card progress (id, easeFactor, interval, repetition, nextReview, lastReview, totalAttempts)
+- `sessions` table: Game session history
 - `settings` table: User settings (singleton key, operation, enabledNumbers, maxNumber, targetTime)
-- `rescues` table: Rescue mission state (currentMission object)
-- `sparkles` table: Sparkles earned (singleton key, total, earnedThisSession, lastUpdated)
+- `missions` table: Completed rescue missions (indexed by completedAt)
+- `currentMissionData` table: Active mission state (singleton)
+- `unlockStatusData` table: Unlocked animals/locations (singleton)
+- `sparklesData` table: Sparkles earned (singleton key, total, lastUpdated)
 
 **Card ID format**: `{operation}-{operand1}-{operand2}` (e.g., `addition-3-5`)
 
