@@ -201,7 +201,6 @@ export function Game() {
 
         // Determine feedback type
         const fbType = determineFeedbackType(isCorrect, responseTime, settings.targetTime);
-        setFeedbackType(fbType);
 
         // Determine if this is a fast+correct answer
         const isFastCorrect = isCorrect && responseTime < settings.targetTime;
@@ -220,21 +219,27 @@ export function Game() {
         };
 
         // Check if rescue is complete
-        if (isMissionSuccessful(updatedMission.progress)) {
+        const justCompleted = isMissionSuccessful(updatedMission.progress) && !currentMission.completedAt;
+        if (justCompleted) {
             updatedMission.completedAt = Date.now();
         }
 
-        setCurrentMission(updatedMission);
+        // Update the card with spaced repetition (existing SM-2 logic)
+        const updatedCard = updateCard(currentCard, isCorrect, responseTime, settings.targetTime);
+
+        // Update all cards
+        const updatedAllCards = allCards.map(card =>
+            card.problem.id === updatedCard.problem.id ? updatedCard : card
+        );
+
+        // Update session cards
+        const updatedSessionCards = [...sessionCards];
+        updatedSessionCards[currentCardIndex] = updatedCard;
 
         // Award sparkles for fast+correct answers
-        if (isFastCorrect) {
-            const newSparkles = awardSparkles(sparkles, SPARKLES_PER_FAST_CORRECT);
-            setSparkles(newSparkles);
-            await saveSparklesToDB(newSparkles);
-            setRecentlyEarnedSparkles(SPARKLES_PER_FAST_CORRECT);
-        } else {
-            setRecentlyEarnedSparkles(0);
-        }
+        const newSparkles = isFastCorrect
+            ? awardSparkles(sparkles, SPARKLES_PER_FAST_CORRECT)
+            : null;
 
         // Select appropriate Sunshine dialogue
         let dialogueType: SunshineDialogueType;
@@ -245,8 +250,6 @@ export function Game() {
         } else {
             dialogueType = 'slow-correct';
         }
-        setSunshineDialogueType(dialogueType);
-        setSunshineDialogue(getSunshineDialogue(dialogueType, currentCard.problem));
 
         // Record the attempt
         const attempt: ProblemAttempt = {
@@ -254,35 +257,40 @@ export function Game() {
             userAnswer,
             isCorrect,
             responseTime,
+            // eslint-disable-next-line react-hooks/purity
             timestamp: Date.now(),
         };
-        setAttempts([...attempts, attempt]);
 
-        // Update the card with spaced repetition (existing SM-2 logic)
-        const updatedCard = updateCard(currentCard, isCorrect, responseTime, settings.targetTime);
-
-        // Update all cards
-        const updatedAllCards = allCards.map(card =>
-            card.problem.id === updatedCard.problem.id ? updatedCard : card
-        );
+        // --- All state updates (batched before any await) ---
+        setCurrentMission(updatedMission);
         setAllCards(updatedAllCards);
-
-        // Update session cards
-        const updatedSessionCards = [...sessionCards];
-        updatedSessionCards[currentCardIndex] = updatedCard;
         setSessionCards(updatedSessionCards);
-
-        // Save progress
-        await saveProgress(updatedAllCards, []);
-        await saveRescueProgress({ currentMission: updatedMission });
-
-        // Show feedback, then animate progress change
+        setFeedbackType(fbType);
+        setSunshineDialogueType(dialogueType);
+        setSunshineDialogue(getSunshineDialogue(dialogueType, currentCard.problem));
+        setAttempts([...attempts, attempt]);
+        if (newSparkles) {
+            setSparkles(newSparkles);
+            setRecentlyEarnedSparkles(SPARKLES_PER_FAST_CORRECT);
+        } else {
+            setRecentlyEarnedSparkles(0);
+        }
+        if (justCompleted) {
+            handleMissionComplete(updatedMission, updatedAllCards);
+        }
         setShowFeedback(true);
 
         // Animate progress after celebration completes (600ms pop animation)
         setTimeout(() => {
             setDisplayedProgress(updatedMission.progress);
         }, 600);
+
+        // --- Async persistence (does not affect render) ---
+        if (newSparkles) {
+            await saveSparklesToDB(newSparkles);
+        }
+        await saveProgress(updatedAllCards, []);
+        await saveRescueProgress({ currentMission: updatedMission });
     };
 
     const handleContinue = () => {
@@ -302,54 +310,38 @@ export function Game() {
         setProblemStartTime(Date.now());
     };
 
-    const handleMissionComplete = async () => {
-        if (!currentMission) return;
+    const handleMissionComplete = async (completedMission: RescueMission, currentCards: MathFactCard[]) => {
+        // Calculate milestones synchronously BEFORE any await, so state updates
+        // are batched with the caller's updates in the same render cycle
+        const milestones = getMilestonesAchieved(currentCards, previouslyMasteredLevels);
+        setAchievedMilestones(milestones);
 
-        const successful = isMissionSuccessful(currentMission.progress);
+        // Save completed mission (async, happens in background)
+        const rescueData = await loadRescueProgress();
+        await saveRescueProgress({
+            completedMissions: [...rescueData.completedMissions, completedMission],
+            currentMission: null,
+        });
 
-        if (successful) {
-            // Save completed mission
-            const rescueData = await loadRescueProgress();
+        // Save newly mastered levels (first time reaching 100%)
+        const newlyMastered = milestones
+            .filter(m => m.milestone === 'mastered')
+            .map(m => m.level);
+
+        if (newlyMastered.length > 0) {
+            // Update local state
+            const updatedSet = new Set(previouslyMasteredLevels);
+            newlyMastered.forEach(level => updatedSet.add(level));
+            setPreviouslyMasteredLevels(updatedSet);
+
+            // Persist to database
+            const updatedGroups = [...updatedSet].map(String);
             await saveRescueProgress({
-                completedMissions: [...rescueData.completedMissions, currentMission],
-                currentMission: null,
+                unlockStatus: {
+                    ...rescueData.unlockStatus,
+                    masteredFactGroups: updatedGroups,
+                }
             });
-
-            // Calculate milestones achieved during this mission
-            // Pass previouslyMasteredLevels to suppress repeated 100% celebrations
-            const milestones = getMilestonesAchieved(allCards, previouslyMasteredLevels);
-            setAchievedMilestones(milestones);
-
-            // Save newly mastered levels (first time reaching 100%)
-            const newlyMastered = milestones
-                .filter(m => m.milestone === 'mastered')
-                .map(m => m.level);
-
-            if (newlyMastered.length > 0) {
-                // Update local state
-                const updatedSet = new Set(previouslyMasteredLevels);
-                newlyMastered.forEach(level => updatedSet.add(level));
-                setPreviouslyMasteredLevels(updatedSet);
-
-                // Persist to database
-                const updatedGroups = [...updatedSet].map(String);
-                await saveRescueProgress({
-                    unlockStatus: {
-                        ...rescueData.unlockStatus,
-                        masteredFactGroups: updatedGroups,
-                    }
-                });
-            }
-
-            // Show appropriate dialogue - use milestone dialogue if milestones achieved
-            if (milestones.length > 0) {
-                const milestoneType = `milestone-${milestones[0].milestone}` as SunshineDialogueType;
-                setSunshineDialogueType(milestoneType);
-                setSunshineDialogue(getSunshineDialogue(milestoneType, undefined, milestones[0].level));
-            } else {
-                setSunshineDialogueType('rescue-complete');
-                setSunshineDialogue(getSunshineDialogue('rescue-complete'));
-            }
         }
     };
 
@@ -441,11 +433,6 @@ export function Game() {
     const missionSuccessful = isMissionSuccessful(currentMission.progress);
 
     if (missionComplete) {
-        // Call complete handler if not already called
-        if (missionSuccessful && !currentMission.completedAt) {
-            handleMissionComplete();
-        }
-
         const completeDialogue = missionSuccessful
             ? (achievedMilestones.length > 0
                 ? getSunshineDialogue(`milestone-${achievedMilestones[0].milestone}` as SunshineDialogueType, undefined, achievedMilestones[0].level)
@@ -468,8 +455,8 @@ export function Game() {
 
                     {missionSuccessful && (
                         <>
-                            <StatsDisplay attempts={attempts} targetTime={settings.targetTime} />
                             <MilestoneBadge milestones={achievedMilestones} />
+                            <StatsDisplay attempts={attempts} targetTime={settings.targetTime} />
                             <div className="sparkles-earned">
                                 ✨ Earned {sparkles.earnedThisSession} sparkles this session!
                             </div>

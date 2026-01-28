@@ -32,19 +32,13 @@ export const SUNSHINE_PHRASES = {
         "Wonderful! The kitten is all warmed up thanks to you!",
     ],
     'milestone-orange': [
-        "You're making progress on your {level}s! Keep it up!",
-        "Nice! Your {level}s facts are getting stronger!",
-        "You're building momentum with those {level}s!",
+        "You passed the orange level on your {level}s!",
     ],
     'milestone-green': [
-        "Halfway there on your {level}s! You're doing amazing!",
-        "Wow! You've reached 50% mastery on your {level}s!",
-        "Your {level}s facts are really clicking now!",
+        "You passed the green level on your {level}s!",
     ],
     'milestone-blue': [
-        "You're almost a {level}s expert! 75% mastered!",
-        "Incredible progress on your {level}s! Nearly there!",
-        "Your {level}s facts are becoming second nature!",
+        "You passed the blue level on your {level}s!",
     ],
     'milestone-mastered': [
         "You've MASTERED your {level}s facts! Amazing!",

@@ -291,6 +291,132 @@ describe('Game - Critical User Flows', () => {
         });
     });
 
+    describe('Milestone Celebrations', () => {
+        it('should show milestone badge when mastery threshold is crossed during a mission', async () => {
+            const user = userEvent.setup({ delay: null });
+
+            // Pre-seed cards to set up a near-threshold state for level 0.
+            // Level 0 with maxNumber 12 has totalFacts = 2*12+1 = 25.
+            // Pre-seed 6 as mastered (24%), need 1 more to reach 7 (28%) → crosses 25%.
+            const now = Date.now();
+            const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+            // 6 mastered cards for level 0 (nextReview far in the future)
+            const masteredCardIds = [
+                'addition-0-0', 'addition-0-1', 'addition-0-2',
+                'addition-0-3', 'addition-0-4', 'addition-0-5',
+            ];
+            const masteredCards = masteredCardIds.map(id => {
+                const parts = id.split('-');
+                const op1 = Number(parts[1]);
+                const op2 = Number(parts[2]);
+                return {
+                    problem: {
+                        id,
+                        operand1: op1,
+                        operand2: op2,
+                        operation: 'addition' as const,
+                        correctAnswer: op1 + op2,
+                    },
+                    easeFactor: 2.5,
+                    interval: 30,
+                    repetitions: 5,
+                    nextReview: now + THIRTY_DAYS_MS,
+                    lastReviewed: now - 24 * 60 * 60 * 1000,
+                    totalAttempts: 5,
+                    correctAttempts: 5,
+                    averageResponseTime: 2000,
+                };
+            });
+
+            // 7 cards at rep=2, interval=6 — ready to become mastered on next fast correct.
+            // After fast correct: rep=3, interval=round(6*2.6)=16 days → nextReview > now+14d → mastered!
+            //
+            // Why 7? selectCards builds a 10-card session: up to 7 review cards + 3 new.
+            // After the final random shuffle, 7/10 cards are ready-to-master, so the
+            // first 5 answered (enough for mission completion) MUST include at least 2
+            // ready cards (pigeonhole: only 3 non-ready cards exist). This eliminates
+            // flakiness from random card ordering.
+            const readyToMasterIds = [
+                'addition-0-6', 'addition-0-7', 'addition-0-8',
+                'addition-0-9', 'addition-0-10', 'addition-0-11',
+                'addition-0-12',
+            ];
+            const readyToMasterCards = readyToMasterIds.map(id => {
+                const parts = id.split('-');
+                const op1 = Number(parts[1]);
+                const op2 = Number(parts[2]);
+                return {
+                    problem: {
+                        id,
+                        operand1: op1,
+                        operand2: op2,
+                        operation: 'addition' as const,
+                        correctAnswer: op1 + op2,
+                    },
+                    easeFactor: 2.5,
+                    interval: 6,
+                    repetitions: 2,
+                    nextReview: now - 1000, // overdue → will be selected for session
+                    lastReviewed: now - 7 * 24 * 60 * 60 * 1000,
+                    totalAttempts: 2,
+                    correctAttempts: 2,
+                    averageResponseTime: 3000,
+                };
+            });
+
+            // Seed the database before rendering
+            await db.cards.bulkPut([...masteredCards, ...readyToMasterCards]);
+
+            render(<Game />);
+
+            // Accept the mission
+            await waitFor(() => {
+                expect(screen.getByRole('button', { name: /help \w+!/i })).toBeInTheDocument();
+            });
+            await user.click(screen.getByRole('button', { name: /help \w+!/i }));
+
+            // Answer problems correctly until mission completes
+            for (let i = 0; i < 12; i++) {
+                await waitFor(() => {
+                    expect(screen.getByText(/= \?/)).toBeInTheDocument();
+                }, { timeout: 3000 });
+
+                const problemText = screen.getByText(/\d+\s*[+\-×÷]\s*\d+/).textContent || '';
+                const match = problemText.match(/(\d+)\s*\+\s*(\d+)/);
+                if (!match) throw new Error('Could not parse problem');
+
+                const correctAnswer = parseInt(match[1]) + parseInt(match[2]);
+                const input = screen.getByPlaceholderText('Your answer');
+                await user.clear(input);
+                await user.type(input, correctAnswer.toString());
+                await user.click(screen.getByRole('button', { name: /submit/i }));
+
+                const missionComplete = await screen.findByText(/mission complete/i, {}, { timeout: 500 })
+                    .then(() => true)
+                    .catch(() => false);
+
+                if (missionComplete) break;
+
+                const continueButton = await screen.findByRole('button', { name: /continue/i });
+                await user.click(continueButton);
+            }
+
+            // Should see mission complete
+            await waitFor(() => {
+                expect(screen.getByText(/mission complete/i)).toBeInTheDocument();
+            }, { timeout: 5000 });
+
+            // Should see milestone celebration (crossing 25% on level 0)
+            await waitFor(() => {
+                expect(screen.getByText(/milestone.*reached/i)).toBeInTheDocument();
+            });
+
+            // Should show it was level 0
+            expect(screen.getByText('Level 0')).toBeInTheDocument();
+        });
+    });
+
     describe('All Caught Up Screen', () => {
         it('should show "All Caught Up" when no cards are due', async () => {
             const user = userEvent.setup({ delay: null });
