@@ -5,10 +5,11 @@ import { calculateOverallProgress } from '../utils/levelProgress';
 
 interface ProgressPageProps {
     cards: MathFactCard[];
+    enabledNumbers?: number[];
     onClose: () => void;
 }
 
-export function ProgressPage({ cards, onClose }: ProgressPageProps) {
+export function ProgressPage({ cards, enabledNumbers, onClose }: ProgressPageProps) {
     const progress = calculateOverallProgress(cards, MAX_LEVEL);
     const { completedLevels, currentLevel, allLevelProgress } = progress;
 
@@ -34,17 +35,19 @@ export function ProgressPage({ cards, onClose }: ProgressPageProps) {
                             const isCompleted = completedLevels.includes(levelProgress.level);
                             const isCurrent = levelProgress.level === displayCurrentLevel && !isAllComplete;
                             const isSelected = levelProgress.level === selectedLevel;
+                            const isEnabled = !enabledNumbers || enabledNumbers.includes(levelProgress.level);
 
                             let className = 'primary-progress-segment';
                             if (isCompleted) className += ' completed';
                             if (isCurrent) className += ' current';
                             if (isSelected) className += ' selected';
+                            if (!isEnabled) className += ' disabled';
 
                             return (
                                 <div
                                     key={levelProgress.level}
                                     className={className}
-                                    title={`Level ${levelProgress.level}: ${Math.round(levelProgress.masteryPercent)}%`}
+                                    title={`Level ${levelProgress.level}: ${Math.round(levelProgress.masteryPercent)}%${!isEnabled ? ' (not practicing)' : ''}`}
                                     onClick={() => setSelectedLevel(levelProgress.level)}
                                 >
                                     {levelProgress.level}

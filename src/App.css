@@ -1105,6 +1105,10 @@
     box-shadow: 0 0 0 2px #667eea;
 }
 
+.primary-progress-segment.disabled {
+    opacity: 0.4;
+}
+
 /* Secondary Progress Bar (single bar with color) */
 /* Progress bar threshold markers */
 .progress-markers {

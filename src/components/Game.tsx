@@ -34,6 +34,7 @@ export function Game() {
     // --- Settings & Card Data ---
     const [settings, setSettings] = useState<GameSettings>(DEFAULT_SETTINGS);
     const [allCards, setAllCards] = useState<MathFactCard[]>([]);
+    const [progressCards, setProgressCards] = useState<MathFactCard[]>([]);
 
     // --- Session Flow ---
     const [sessionCards, setSessionCards] = useState<MathFactCard[]>([]);
@@ -149,6 +150,18 @@ export function Game() {
             }
 
             setAllCards(cardsToUse);
+
+            // Generate full card set for progress display (all levels, no filter)
+            const fullCards = generateAllFacts(settings.operation, settings.maxNumber);
+            if (stored && stored.cards.length > 0) {
+                const storedMap = new Map(
+                    stored.cards.map(card => [card.problem.id, card])
+                );
+                setProgressCards(fullCards.map(card => storedMap.get(card.problem.id) || card));
+            } else {
+                setProgressCards(fullCards);
+            }
+
             const selected = selectCards(cardsToUse, settings.cardsPerSession);
 
             // Check if we have enough due cards
@@ -355,7 +368,8 @@ export function Game() {
     if (showProgress) {
         return (
             <ProgressPage
-                cards={allCards}
+                cards={progressCards}
+                enabledNumbers={settings.enabledNumbers}
                 onClose={() => setShowProgress(false)}
             />
         );
