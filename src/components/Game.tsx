@@ -2,13 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import type { MathFactCard, GameSettings, ProblemAttempt, RescueMission, SparklesData, SunshineDialogueType } from '../types/game';
 import { MAX_LEVEL } from '../constants';
 import { generateAllFacts } from '../utils/cardGenerator';
-import { selectCards, updateCard, selectBonusCards, getNextDueTime } from '../utils/spacedRepetition';
+import { selectCards, selectBonusCards, getNextDueTime } from '../utils/spacedRepetition';
 import { saveProgress, loadProgress, saveRescueProgress, loadRescueProgress, loadSettings, saveSettings, loadSparkles as loadSparklesFromDB, saveSparkles as saveSparklesToDB } from '../utils/storage-dexie';
-import { determineFeedbackType, type FeedbackType } from '../utils/feedback';
+import type { FeedbackType } from '../utils/feedback';
 import { createNewMission, isMissionComplete, isMissionSuccessful, getMissionIntroDialogue, getMissionCompleteDialogue } from '../utils/rescue';
 import { getSunshineDialogue } from '../utils/sunshine';
+import { processAnswer } from '../utils/answerProcessor';
 import { MissionIntro } from './MissionIntro';
-import { awardSparkles, SPARKLES_PER_FAST_CORRECT } from '../utils/sparkles';
 import { ProblemDisplay } from './ProblemDisplay';
 import { AnswerInput } from './AnswerInput';
 import { Feedback } from './Feedback';
@@ -31,31 +31,40 @@ const DEFAULT_SETTINGS: GameSettings = {
 };
 
 export function Game() {
+    // --- Settings & Card Data ---
     const [settings, setSettings] = useState<GameSettings>(DEFAULT_SETTINGS);
     const [allCards, setAllCards] = useState<MathFactCard[]>([]);
+
+    // --- Session Flow ---
     const [sessionCards, setSessionCards] = useState<MathFactCard[]>([]);
     const [currentCardIndex, setCurrentCardIndex] = useState(0);
     const [attempts, setAttempts] = useState<ProblemAttempt[]>([]);
-    const [showFeedback, setShowFeedback] = useState(false);
-    const [feedbackType, setFeedbackType] = useState<FeedbackType>('correct-fast');
     // eslint-disable-next-line react-hooks/purity
     const [problemStartTime, setProblemStartTime] = useState(Date.now());
-    const [showSettings, setShowSettings] = useState(false);
-    const [showProgress, setShowProgress] = useState(false);
 
-    // Rescue game state
-    const [currentMission, setCurrentMission] = useState<RescueMission | null>(null);
-    const [showMissionIntro, setShowMissionIntro] = useState(true);
-    const [sparkles, setSparkles] = useState<SparklesData>({ total: 0, earnedThisSession: 0 });
+    // --- Feedback & Dialogue ---
+    const [showFeedback, setShowFeedback] = useState(false);
+    const [feedbackType, setFeedbackType] = useState<FeedbackType>('correct-fast');
     const [sunshineDialogue, setSunshineDialogue] = useState<string>('');
     const [sunshineDialogueType, setSunshineDialogueType] = useState<SunshineDialogueType>('intro');
     const [recentlyEarnedSparkles, setRecentlyEarnedSparkles] = useState(0);
-    const [displayedProgress, setDisplayedProgress] = useState(0); // For animated progress changes
-    const [isBonusMode, setIsBonusMode] = useState(false);
-    const [showAllCaughtUp, setShowAllCaughtUp] = useState(false);
+
+    // --- Mission State ---
+    const [currentMission, setCurrentMission] = useState<RescueMission | null>(null);
+    const [showMissionIntro, setShowMissionIntro] = useState(true);
+    const [displayedProgress, setDisplayedProgress] = useState(0);
+
+    // --- Sparkles & Milestones ---
+    const [sparkles, setSparkles] = useState<SparklesData>({ total: 0, earnedThisSession: 0 });
     const [achievedMilestones, setAchievedMilestones] = useState<MasteryMilestone[]>([]);
     const [previouslyMasteredLevels, setPreviouslyMasteredLevels] = useState<Set<number>>(new Set());
     const { capturePreMissionState, getMilestonesAchieved } = useMasteryMilestones();
+
+    // --- UI Visibility ---
+    const [showSettings, setShowSettings] = useState(false);
+    const [showProgress, setShowProgress] = useState(false);
+    const [isBonusMode, setIsBonusMode] = useState(false);
+    const [showAllCaughtUp, setShowAllCaughtUp] = useState(false);
 
     // Load settings from Dexie on mount
     useEffect(() => {
@@ -195,102 +204,53 @@ export function Game() {
     const handleAnswer = async (userAnswer: number) => {
         if (currentCardIndex >= sessionCards.length || !currentMission) return;
 
-        const currentCard = sessionCards[currentCardIndex];
-        const responseTime = Date.now() - problemStartTime;
-        const isCorrect = userAnswer === currentCard.problem.correctAnswer;
-
-        // Determine feedback type
-        const fbType = determineFeedbackType(isCorrect, responseTime, settings.targetTime);
-
-        // Determine if this is a fast+correct answer
-        const isFastCorrect = isCorrect && responseTime < settings.targetTime;
-
-        // Calculate progress increment: +2 for fast+correct, +1 for slow+correct, +0 for incorrect
-        const progressIncrement = isFastCorrect ? 2 : (isCorrect ? 1 : 0);
-
-        // Update mission progress
-        const updatedMission: RescueMission = {
-            ...currentMission,
-            progress: Math.min(10, currentMission.progress + progressIncrement),
-            correctAnswers: currentMission.correctAnswers + (isCorrect ? 1 : 0),
-            fastCorrectAnswers: currentMission.fastCorrectAnswers + (isFastCorrect ? 1 : 0),
-            totalAttempts: currentMission.totalAttempts + 1,
-            problemsInMission: [...currentMission.problemsInMission, currentCard.problem.id],
-        };
-
-        // Check if rescue is complete
-        const justCompleted = isMissionSuccessful(updatedMission.progress) && !currentMission.completedAt;
-        if (justCompleted) {
-            updatedMission.completedAt = Date.now();
-        }
-
-        // Update the card with spaced repetition (existing SM-2 logic)
-        const updatedCard = updateCard(currentCard, isCorrect, responseTime, settings.targetTime);
-
-        // Update all cards
-        const updatedAllCards = allCards.map(card =>
-            card.problem.id === updatedCard.problem.id ? updatedCard : card
+        // eslint-disable-next-line react-hooks/purity
+        const now = Date.now();
+        const result = processAnswer(
+            sessionCards[currentCardIndex],
+            userAnswer,
+            currentMission,
+            settings.targetTime,
+            sparkles,
+            problemStartTime,
+            now,
         );
 
-        // Update session cards
+        // Update all cards with the new spaced repetition data
+        const updatedAllCards = allCards.map(card =>
+            card.problem.id === result.updatedCard.problem.id ? result.updatedCard : card
+        );
         const updatedSessionCards = [...sessionCards];
-        updatedSessionCards[currentCardIndex] = updatedCard;
+        updatedSessionCards[currentCardIndex] = result.updatedCard;
 
-        // Award sparkles for fast+correct answers
-        const newSparkles = isFastCorrect
-            ? awardSparkles(sparkles, SPARKLES_PER_FAST_CORRECT)
-            : null;
-
-        // Select appropriate Sunshine dialogue
-        let dialogueType: SunshineDialogueType;
-        if (!isCorrect) {
-            dialogueType = 'incorrect';
-        } else if (isFastCorrect) {
-            dialogueType = 'fast-correct';
-        } else {
-            dialogueType = 'slow-correct';
-        }
-
-        // Record the attempt
-        const attempt: ProblemAttempt = {
-            card: currentCard,
-            userAnswer,
-            isCorrect,
-            responseTime,
-            // eslint-disable-next-line react-hooks/purity
-            timestamp: Date.now(),
-        };
-
-        // --- All state updates (batched before any await) ---
-        setCurrentMission(updatedMission);
+        // --- Synchronous state updates (batched by React) ---
+        setCurrentMission(result.updatedMission);
         setAllCards(updatedAllCards);
         setSessionCards(updatedSessionCards);
-        setFeedbackType(fbType);
-        setSunshineDialogueType(dialogueType);
-        setSunshineDialogue(getSunshineDialogue(dialogueType, currentCard.problem));
-        setAttempts([...attempts, attempt]);
-        if (newSparkles) {
-            setSparkles(newSparkles);
-            setRecentlyEarnedSparkles(SPARKLES_PER_FAST_CORRECT);
-        } else {
-            setRecentlyEarnedSparkles(0);
+        setFeedbackType(result.feedbackType);
+        setSunshineDialogueType(result.dialogueType);
+        setSunshineDialogue(result.dialogue);
+        setAttempts([...attempts, result.attempt]);
+        setRecentlyEarnedSparkles(result.recentlyEarnedSparkles);
+        if (result.newSparkles) {
+            setSparkles(result.newSparkles);
         }
-        if (justCompleted) {
-            handleMissionComplete(updatedMission, updatedAllCards);
+        if (result.justCompleted) {
+            handleMissionComplete(result.updatedMission, updatedAllCards);
         }
         setShowFeedback(true);
 
         // Animate progress after celebration completes (600ms pop animation)
         setTimeout(() => {
-            setDisplayedProgress(updatedMission.progress);
+            setDisplayedProgress(result.updatedMission.progress);
         }, 600);
 
         // --- Async persistence (does not affect render) ---
-        if (newSparkles) {
-            await saveSparklesToDB(newSparkles);
+        if (result.newSparkles) {
+            await saveSparklesToDB(result.newSparkles);
         }
         await saveProgress(updatedAllCards, []);
-        await saveRescueProgress({ currentMission: updatedMission });
+        await saveRescueProgress({ currentMission: result.updatedMission });
     };
 
     const handleContinue = () => {
