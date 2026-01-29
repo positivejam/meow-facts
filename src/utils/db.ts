@@ -44,3 +44,14 @@ export class MeowFactsDatabase extends Dexie {
 
 // Export singleton instance
 export const db = new MeowFactsDatabase();
+
+declare global {
+    interface Window {
+        db?: typeof db;
+    }
+}
+
+// Attach to window object for console debugging in development
+if (import.meta.env.DEV) {
+    window.db = db;
+}
