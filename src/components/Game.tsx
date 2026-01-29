@@ -239,6 +239,14 @@ export function Game() {
         // --- Synchronous state updates (batched by React) ---
         setCurrentMission(result.updatedMission);
         setAllCards(updatedAllCards);
+        // Also update progressCards so ProgressPage shows current mastery
+        setProgressCards(prevProgressCards =>
+            prevProgressCards.map(card =>
+                card.problem.id === result.updatedCard.problem.id
+                    ? result.updatedCard
+                    : card
+            )
+        );
         setSessionCards(updatedSessionCards);
         setFeedbackType(result.feedbackType);
         setSunshineDialogueType(result.dialogueType);

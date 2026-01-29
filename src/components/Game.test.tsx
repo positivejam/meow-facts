@@ -427,6 +427,144 @@ describe('Game - Critical User Flows', () => {
         });
     });
 
+    describe('Progress Page Synchronization', () => {
+        it('should show updated mastery on ProgressPage after answering questions', async () => {
+            const user = userEvent.setup({ delay: null });
+
+            // Pre-seed some already-mastered cards and some ready-to-master cards.
+            // This tests that after answering a question, progressCards is updated to reflect
+            // the new mastery state (regression test for stale progressCards bug).
+            const now = Date.now();
+            const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+            // 6 already-mastered cards for level 0 (nextReview far in future = mastered)
+            const alreadyMasteredIds = [
+                'addition-0-0', 'addition-0-1', 'addition-0-2',
+                'addition-0-3', 'addition-0-4', 'addition-0-5',
+            ];
+            const alreadyMasteredCards = alreadyMasteredIds.map(id => {
+                const parts = id.split('-');
+                const op1 = Number(parts[1]);
+                const op2 = Number(parts[2]);
+                return {
+                    problem: {
+                        id,
+                        operand1: op1,
+                        operand2: op2,
+                        operation: 'addition' as const,
+                        correctAnswer: op1 + op2,
+                    },
+                    easeFactor: 2.6,
+                    interval: 30,
+                    repetitions: 5,
+                    nextReview: now + THIRTY_DAYS_MS, // Far in future = mastered
+                    lastReviewed: now - 24 * 60 * 60 * 1000,
+                    totalAttempts: 5,
+                    correctAttempts: 5,
+                    averageResponseTime: 2000,
+                };
+            });
+
+            // 7 ready-to-master cards - after fast correct they become mastered
+            // (rep=2, interval=6 -> rep=3, interval=~16 days which is >14 days)
+            const readyToMasterIds = [
+                'addition-0-6', 'addition-0-7', 'addition-0-8',
+                'addition-0-9', 'addition-0-10', 'addition-0-11',
+                'addition-0-12',
+            ];
+            const readyToMasterCards = readyToMasterIds.map(id => {
+                const parts = id.split('-');
+                const op1 = Number(parts[1]);
+                const op2 = Number(parts[2]);
+                return {
+                    problem: {
+                        id,
+                        operand1: op1,
+                        operand2: op2,
+                        operation: 'addition' as const,
+                        correctAnswer: op1 + op2,
+                    },
+                    easeFactor: 2.5,
+                    interval: 6,
+                    repetitions: 2,
+                    nextReview: now - 1000, // Overdue = will be selected for session
+                    lastReviewed: now - 7 * 24 * 60 * 60 * 1000,
+                    totalAttempts: 2,
+                    correctAttempts: 2,
+                    averageResponseTime: 3000,
+                };
+            });
+
+            await db.cards.bulkPut([...alreadyMasteredCards, ...readyToMasterCards]);
+
+            render(<Game />);
+
+            // First, verify the progress page shows the initial 6 mastered cards
+            // Open Progress page before answering any questions
+            await waitFor(() => {
+                expect(screen.getByRole('button', { name: /📊|progress/i })).toBeInTheDocument();
+            });
+            await user.click(screen.getByRole('button', { name: /📊|progress/i }));
+
+            await waitFor(() => {
+                expect(screen.getByText(/your progress/i)).toBeInTheDocument();
+            });
+
+            // Initially should show 6/25 mastered (24%)
+            await waitFor(() => {
+                expect(screen.getByText(/6\/25 facts/)).toBeInTheDocument();
+            });
+
+            // Close progress page
+            await user.click(screen.getByRole('button', { name: /back to practice/i }));
+
+            // Accept mission
+            await waitFor(() => {
+                expect(screen.getByRole('button', { name: /help \w+!/i })).toBeInTheDocument();
+            });
+            await user.click(screen.getByRole('button', { name: /help \w+!/i }));
+
+            // Wait for first problem
+            await waitFor(() => {
+                expect(screen.getByText(/= \?/)).toBeInTheDocument();
+            });
+
+            // Answer the question correctly (fast) - this should master a 7th card
+            const problemText = screen.getByText(/\d+\s*[+\-×÷]\s*\d+/).textContent || '';
+            const match = problemText.match(/(\d+)\s*\+\s*(\d+)/);
+            if (!match) throw new Error('Could not parse problem');
+
+            const correctAnswer = parseInt(match[1]) + parseInt(match[2]);
+            const input = screen.getByPlaceholderText('Your answer');
+            await user.clear(input);
+            await user.type(input, correctAnswer.toString());
+            await user.click(screen.getByRole('button', { name: /submit/i }));
+
+            // Wait for feedback
+            await waitFor(() => {
+                expect(screen.getByRole('button', { name: /continue/i })).toBeInTheDocument();
+            });
+
+            // Open Progress page again (📊 button)
+            await user.click(screen.getByRole('button', { name: /📊|progress/i }));
+
+            await waitFor(() => {
+                expect(screen.getByText(/your progress/i)).toBeInTheDocument();
+            });
+
+            // After answering, should show MORE than 6 mastered cards
+            // The bug was that progressCards wasn't updated, so it still showed 6/25
+            // After the fix, it should show 7/25 or more (depending on which card was answered)
+            await waitFor(() => {
+                const factsText = screen.getByText(/\/25 facts/).textContent || '';
+                const masteredMatch = factsText.match(/(\d+)\/25 facts/);
+                expect(masteredMatch).not.toBeNull();
+                const masteredCount = parseInt(masteredMatch![1]);
+                expect(masteredCount).toBeGreaterThan(6);
+            });
+        });
+    });
+
     describe('All Caught Up Screen', () => {
         it('should show "All Caught Up" when no cards are due', async () => {
             const user = userEvent.setup({ delay: null });
