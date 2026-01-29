@@ -1,5 +1,7 @@
+import { useState } from 'react';
 import type { GameSettings } from '../types/game';
 import { MAX_LEVEL } from '../constants';
+import { clearAllData } from '../utils/storage-dexie';
 
 interface SettingsProps {
     settings: GameSettings;
@@ -10,6 +12,22 @@ interface SettingsProps {
 export function Settings({ settings, onSettingsChange, onClose }: SettingsProps) {
     // Fixed range for checkboxes - all levels 0 through MAX_LEVEL
     const allNumbers = Array.from({ length: MAX_LEVEL + 1 }, (_, i) => i);
+
+    const [showClearConfirm, setShowClearConfirm] = useState(false);
+    const [isClearing, setIsClearing] = useState(false);
+
+    const handleClearAllData = async () => {
+        setIsClearing(true);
+        try {
+            await clearAllData();
+            // Reload the page to reset all app state
+            window.location.reload();
+        } catch (error) {
+            console.error('Failed to clear data:', error);
+            setIsClearing(false);
+            setShowClearConfirm(false);
+        }
+    };
 
     const toggleNumber = (num: number) => {
         const currentEnabled = settings.enabledNumbers || allNumbers;
@@ -167,6 +185,38 @@ export function Settings({ settings, onSettingsChange, onClose }: SettingsProps)
                 <button onClick={onClose} className="start-button">
                     Start Practice
                 </button>
+
+                <div className="settings-section danger-section">
+                    <h3>Caution Zone</h3>
+                    {!showClearConfirm ? (
+                        <button
+                            onClick={() => setShowClearConfirm(true)}
+                            className="danger-button"
+                        >
+                            Clear All Data
+                        </button>
+                    ) : (
+                        <div className="confirm-clear">
+                            <p>This will delete all your progress, settings, and rescue missions. This cannot be undone.</p>
+                            <div className="confirm-buttons">
+                                <button
+                                    onClick={handleClearAllData}
+                                    className="danger-button"
+                                    disabled={isClearing}
+                                >
+                                    {isClearing ? 'Clearing...' : 'Yes, Clear Everything'}
+                                </button>
+                                <button
+                                    onClick={() => setShowClearConfirm(false)}
+                                    className="action-button"
+                                    disabled={isClearing}
+                                >
+                                    Cancel
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
         </div>
     );

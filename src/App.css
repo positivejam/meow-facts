@@ -1190,6 +1190,62 @@
     background: rgba(102, 126, 234, 0.1);
 }
 
+/* Danger Section */
+.danger-section {
+    border-top: 1px solid #eee;
+    margin-top: 1rem;
+    padding-top: 1rem;
+}
+
+.danger-button {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.danger-button:hover:not(:disabled) {
+    background-color: #c82333;
+}
+
+.danger-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.confirm-clear {
+    animation: fadeSlideIn 0.2s ease-out;
+}
+
+@keyframes fadeSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.confirm-clear p {
+    color: #dc3545;
+    margin-bottom: 0.75rem;
+    font-size: 0.9rem;
+}
+
+.confirm-buttons {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.confirm-buttons .action-button {
+    flex: 0;
+}
+
 /* Responsive */
 @media (max-width: 640px) {
     .app {

@@ -277,7 +277,7 @@ describe('Game - Critical User Flows', () => {
             });
 
             // Clear all numbers (this will set to [0])
-            await user.click(screen.getByRole('button', { name: /clear all/i }));
+            await user.click(screen.getByRole('button', { name: /^clear all$/i }));
 
             // Check the checkbox for 5
             const checkbox5 = screen.getByLabelText('5') as HTMLInputElement;
@@ -444,7 +444,7 @@ describe('Game - Critical User Flows', () => {
             });
 
             // Clear all numbers and enable only 0
-            await user.click(screen.getByRole('button', { name: /clear all/i }));
+            await user.click(screen.getByRole('button', { name: /^clear all$/i }));
 
             // Set max number to 0 so range is only [0-0]
             const maxNumberSelect = document.querySelector('.max-number-select') as HTMLSelectElement;

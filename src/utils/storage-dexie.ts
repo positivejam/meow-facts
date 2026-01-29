@@ -213,10 +213,18 @@ export async function saveSettings(settings: GameSettings): Promise<void> {
 // Clear all data (useful for reset/debugging)
 export async function clearAllData(): Promise<void> {
     try {
-        await db.delete();
-        await db.open();
+        await Promise.all([
+            db.cards.clear(),
+            db.sessions.clear(),
+            db.missions.clear(),
+            db.settings.clear(),
+            db.sparklesData.clear(),
+            db.currentMissionData.clear(),
+            db.unlockStatusData.clear(),
+        ]);
     } catch (error) {
         console.error('Failed to clear all data:', error);
+        throw error; // Re-throw so UI can handle it
     }
 }
 
