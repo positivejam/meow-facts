@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import type { GameSettings } from '../types/game';
+import type { GameSettings, Operation } from '../types/game';
 import { MAX_LEVEL } from '../constants';
 import { clearAllData } from '../utils/storage-dexie';
 
@@ -73,6 +73,13 @@ export function Settings({ settings, onSettingsChange, onClose }: SettingsProps)
         });
     };
 
+    const handleOperationChange = (operation: Operation) => {
+        onSettingsChange({
+            ...settings,
+            operation,
+        });
+    };
+
     function cartesianProduct(setA: number[], setB: number[]): number[][] {
         return setA.flatMap(a => setB.map(b => [a, b]));
     }
@@ -101,12 +108,41 @@ export function Settings({ settings, onSettingsChange, onClose }: SettingsProps)
     const zeroToMaxNumArray = Array.from({ length: settings.maxNumber + 1 }, (_, i) => i);
     const currentChecked = settings.enabledNumbers || allNumbers;
     const facts = symmetricCartesianProduct(zeroToMaxNumArray, currentChecked);
-    const factCount = facts.length;
+    // For subtraction, only count pairs where first operand >= second (no negative results)
+    const factCount = settings.operation === 'subtraction'
+        ? facts.filter(([a, b]) => a >= b).length
+        : facts.length;
 
     return (
         <div className="settings-overlay">
             <div className="settings-panel">
                 <h2>Settings</h2>
+
+                <div className="settings-section">
+                    <h3>Operation</h3>
+                    <div className="operation-selector">
+                        <label className="operation-option">
+                            <input
+                                type="radio"
+                                name="operation"
+                                value="addition"
+                                checked={settings.operation === 'addition'}
+                                onChange={() => handleOperationChange('addition')}
+                            />
+                            <span>Addition (+)</span>
+                        </label>
+                        <label className="operation-option">
+                            <input
+                                type="radio"
+                                name="operation"
+                                value="subtraction"
+                                checked={settings.operation === 'subtraction'}
+                                onChange={() => handleOperationChange('subtraction')}
+                            />
+                            <span>Subtraction (−)</span>
+                        </label>
+                    </div>
+                </div>
 
                 <div className="settings-section">
                     <h3>Numbers to Practice</h3>

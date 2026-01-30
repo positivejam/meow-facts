@@ -32,6 +32,7 @@ export function generateAllFacts(
                     correctAnswer = operand1 + operand2;
                     break;
                 case 'subtraction':
+                    if (operand1 < operand2) continue; // Skip negative results
                     correctAnswer = operand1 - operand2;
                     break;
                 case 'multiplication':

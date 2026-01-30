@@ -203,7 +203,7 @@ describe('Game - Critical User Flows', () => {
             });
         });
 
-        it('should display fact count of 169 when all numbers are checked and max number is set to 12', async () => {
+        it('should display fact count of 169 when all numbers are checked and max number is set to 12 (addition)', async () => {
             const user = userEvent.setup({ delay: null });
             render(<Game />);
 
@@ -258,6 +258,52 @@ describe('Game - Critical User Flows', () => {
             // Should see "169 math facts selected"
             await waitFor(() => {
                 expect(screen.getByText('169 math facts selected')).toBeInTheDocument();
+            });
+        });
+
+        it('should display fact count of 91 when all numbers are checked and max number is set to 12 (subtraction)', async () => {
+            const user = userEvent.setup({ delay: null });
+            render(<Game />);
+
+            // Open settings
+            await waitFor(() => {
+                expect(screen.getByRole('button', { name: /⚙️|settings/i })).toBeInTheDocument();
+            });
+            await user.click(screen.getByRole('button', { name: /⚙️|settings/i }));
+
+            // Wait for settings screen
+            await waitFor(() => {
+                expect(screen.getByText(/settings/i)).toBeInTheDocument();
+            });
+
+            // Select subtraction operation
+            await user.click(screen.getByLabelText('Subtraction (−)'));
+
+            // Verify subtraction is selected
+            await waitFor(() => {
+                const subtractionRadio = screen.getByLabelText('Subtraction (−)') as HTMLInputElement;
+                expect(subtractionRadio.checked).toBe(true);
+            });
+
+            // Select all numbers
+            await user.click(screen.getByRole('button', { name: /select all/i }));
+
+            // Verify all checkboxes are checked
+            await waitFor(() => {
+                for (let i = 0; i <= 12; i++) {
+                    const checkbox = screen.getByLabelText(i.toString()) as HTMLInputElement;
+                    expect(checkbox.checked).toBe(true);
+                }
+            });
+
+            // Set max number to 12
+            const maxNumberSelect = screen.getByLabelText(/maximum number/i);
+            await user.selectOptions(maxNumberSelect, '12');
+
+            // Subtraction has 91 facts (only where operand1 >= operand2 to avoid negatives)
+            // This is different from addition's 169 facts
+            await waitFor(() => {
+                expect(screen.getByText('91 math facts selected')).toBeInTheDocument();
             });
         });
 

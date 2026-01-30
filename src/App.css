@@ -1109,6 +1109,27 @@
     opacity: 0.4;
 }
 
+/* Operation Progress (dual bars) */
+.operation-progress {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.operation-label {
+    width: 80px;
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+    text-align: right;
+}
+
+.primary-progress-bar.active {
+    box-shadow: 0 0 0 2px #667eea;
+    border-radius: 6px;
+}
+
 /* Secondary Progress Bar (single bar with color) */
 /* Progress bar threshold markers */
 .progress-markers {
