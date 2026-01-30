@@ -115,7 +115,7 @@ export function ProgressPage({ cards, enabledNumbers, onClose }: ProgressPagePro
                 </div>
 
                 <div className="progress-section">
-                    <h3>Level: {selectedLevel}s ({selectedOperation === 'addition' ? '+' : '−'})</h3>
+                    <h3>Level {selectedLevel}: {selectedLevel}s ({selectedOperation === 'addition' ? '+' : '−'})</h3>
                     <div className="progress-markers">
                         <div className="progress-marker red" style={{ left: '0%' }}>▼</div>
                         <div className="progress-marker orange" style={{ left: '25%' }}>▼</div>
