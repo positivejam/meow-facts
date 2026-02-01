@@ -45,11 +45,22 @@ function getColorForPercent(percent: number): MasteryColor {
 
 /**
  * Calculates the total number of possible facts for a level.
- * For level L with maxNumber M, facts are: L+0..L+M and 0+L..M+L
- * Excluding the duplicate L+L, total = 2*(M+1) - 1 = 2*M + 1
+ *
+ * For ADDITION level L with maxNumber M:
+ *   L+0..L+M and 0+L..M+L, excluding duplicate L+L
+ *   Total = 2*(M+1) - 1 = 2*M + 1
+ *
+ * For SUBTRACTION level L with maxNumber M:
+ *   X-L where X in [L, M] = (M - L + 1) facts
+ *   L-Y where Y in [0, L] = (L + 1) facts
+ *   Minus duplicate L-L = 1
+ *   Total = (M - L + 1) + (L + 1) - 1 = M + 1
  */
-function getTotalPossibleFactsForLevel(maxNumber: number): number {
-  return 2 * maxNumber + 1;
+function getTotalPossibleFactsForLevel(maxNumber: number, operation: 'addition' | 'subtraction' = 'addition'): number {
+  if (operation === 'subtraction') {
+    return maxNumber + 1;  // 13 facts per level for subtraction
+  }
+  return 2 * maxNumber + 1;  // 25 facts per level for addition
 }
 
 /**
@@ -64,7 +75,10 @@ export function calculateLevelMastery(
   now: number = Date.now()
 ): LevelMasteryResult {
   const levelFacts = getFactsForLevel(cards, level);
-  const totalFacts = getTotalPossibleFactsForLevel(maxNumber);
+
+  // Detect operation from cards (default to addition if no cards)
+  const operation = cards.length > 0 ? cards[0].problem.operation : 'addition';
+  const totalFacts = getTotalPossibleFactsForLevel(maxNumber, operation as 'addition' | 'subtraction');
 
   const twoWeeksFromNow = now + TWO_WEEKS_MS;
   const masteredFacts = levelFacts.filter(

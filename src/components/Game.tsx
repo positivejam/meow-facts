@@ -210,6 +210,9 @@ export function Game() {
         setIsBonusMode(true);
         setShowAllCaughtUp(false);
 
+        // Capture mastery state before mission for milestone detection
+        capturePreMissionState(allCards);
+
         // Start a new mission for bonus practice
         await initializeMissionState();
     };

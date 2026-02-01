@@ -471,6 +471,587 @@ describe('Game - Critical User Flows', () => {
             // Should show it was level 0
             expect(screen.getByText('Level 0')).toBeInTheDocument();
         });
+
+        it('should not repeat milestone celebrations across missions', async () => {
+            const user = userEvent.setup({ delay: null });
+
+            // Pre-seed level 0 cards to set up a near-50% threshold state.
+            // Level 0 with maxNumber 12 has totalFacts = 2*12+1 = 25.
+            // Pre-seed 12 as mastered (48%), need 1 more to reach 13 (52%) → crosses 50%.
+            const now = Date.now();
+            const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+            // 12 mastered cards for level 0 (nextReview far in the future)
+            // Using ONLY level 0 cards to avoid triggering other level milestones
+            const masteredCardIds = [
+                'addition-0-0', 'addition-0-1', 'addition-0-2', 'addition-0-3',
+                'addition-0-4', 'addition-0-5', 'addition-0-6', 'addition-0-7',
+                'addition-0-8', 'addition-0-9', 'addition-0-10', 'addition-0-11',
+            ];
+            const masteredCards = masteredCardIds.map(id => {
+                const parts = id.split('-');
+                const op1 = Number(parts[1]);
+                const op2 = Number(parts[2]);
+                return {
+                    problem: {
+                        id,
+                        operand1: op1,
+                        operand2: op2,
+                        operation: 'addition' as const,
+                        correctAnswer: op1 + op2,
+                    },
+                    easeFactor: 2.5,
+                    interval: 30,
+                    repetitions: 5,
+                    nextReview: now + THIRTY_DAYS_MS,
+                    lastReviewed: now - 24 * 60 * 60 * 1000,
+                    totalAttempts: 5,
+                    correctAttempts: 5,
+                    averageResponseTime: 2000,
+                };
+            });
+
+            // 10 cards at rep=2, interval=6 — ALL are level 0 cards (remaining ones)
+            // This ensures we stay in level 0 and don't trigger level 1 milestones
+            // Level 0 cards remaining: 0-12, 1-0, 2-0, 3-0, 4-0, 5-0, 6-0, 7-0, 8-0, 9-0, 10-0, 11-0, 12-0
+            const readyToMasterIds = [
+                'addition-0-12', 'addition-1-0', 'addition-2-0', 'addition-3-0',
+                'addition-4-0', 'addition-5-0', 'addition-6-0', 'addition-7-0',
+                'addition-8-0', 'addition-9-0',
+            ];
+            const readyToMasterCards = readyToMasterIds.map(id => {
+                const parts = id.split('-');
+                const op1 = Number(parts[1]);
+                const op2 = Number(parts[2]);
+                return {
+                    problem: {
+                        id,
+                        operand1: op1,
+                        operand2: op2,
+                        operation: 'addition' as const,
+                        correctAnswer: op1 + op2,
+                    },
+                    easeFactor: 2.5,
+                    interval: 6,
+                    repetitions: 2,
+                    nextReview: now - 1000, // overdue → will be selected for session
+                    lastReviewed: now - 7 * 24 * 60 * 60 * 1000,
+                    totalAttempts: 2,
+                    correctAttempts: 2,
+                    averageResponseTime: 3000,
+                };
+            });
+
+            // Seed the database before rendering
+            await db.cards.bulkPut([...masteredCards, ...readyToMasterCards]);
+
+            render(<Game />);
+
+            // Accept the first mission
+            await waitFor(() => {
+                expect(screen.getByRole('button', { name: /help \w+!/i })).toBeInTheDocument();
+            });
+            await user.click(screen.getByRole('button', { name: /help \w+!/i }));
+
+            // Complete mission 1 - answer problems correctly until mission completes
+            for (let i = 0; i < 12; i++) {
+                await waitFor(() => {
+                    expect(screen.getByText(/= \?/)).toBeInTheDocument();
+                }, { timeout: 3000 });
+
+                const problemText = screen.getByText(/\d+\s*[+\-×÷]\s*\d+/).textContent || '';
+                const match = problemText.match(/(\d+)\s*\+\s*(\d+)/);
+                if (!match) throw new Error('Could not parse problem');
+
+                const correctAnswer = parseInt(match[1]) + parseInt(match[2]);
+                const input = screen.getByPlaceholderText('Your answer');
+                await user.clear(input);
+                await user.type(input, correctAnswer.toString());
+                await user.click(screen.getByRole('button', { name: /submit/i }));
+
+                const missionComplete = await screen.findByText(/mission complete/i, {}, { timeout: 500 })
+                    .then(() => true)
+                    .catch(() => false);
+
+                if (missionComplete) break;
+
+                const continueButton = await screen.findByRole('button', { name: /continue/i });
+                await user.click(continueButton);
+            }
+
+            // Should see mission complete
+            await waitFor(() => {
+                expect(screen.getByText(/mission complete/i)).toBeInTheDocument();
+            }, { timeout: 5000 });
+
+            // Should see GREEN milestone celebration (crossing 50% on level 0)
+            await waitFor(() => {
+                expect(screen.getByText(/milestone.*reached/i)).toBeInTheDocument();
+            });
+            expect(screen.getByText('Level 0')).toBeInTheDocument();
+            // Verify it's the green (50%) milestone
+            expect(screen.getByText(/50% Mastery/)).toBeInTheDocument();
+
+            // Click "Help Another Animal" to start mission 2
+            await user.click(screen.getByRole('button', { name: /help another animal/i }));
+
+            // Accept mission 2
+            await waitFor(() => {
+                expect(screen.getByRole('button', { name: /help \w+!/i })).toBeInTheDocument();
+            });
+            await user.click(screen.getByRole('button', { name: /help \w+!/i }));
+
+            // Complete mission 2
+            for (let i = 0; i < 12; i++) {
+                await waitFor(() => {
+                    expect(screen.getByText(/= \?/)).toBeInTheDocument();
+                }, { timeout: 3000 });
+
+                const problemText = screen.getByText(/\d+\s*[+\-×÷]\s*\d+/).textContent || '';
+                const match = problemText.match(/(\d+)\s*\+\s*(\d+)/);
+                if (!match) throw new Error('Could not parse problem');
+
+                const correctAnswer = parseInt(match[1]) + parseInt(match[2]);
+                const input = screen.getByPlaceholderText('Your answer');
+                await user.clear(input);
+                await user.type(input, correctAnswer.toString());
+                await user.click(screen.getByRole('button', { name: /submit/i }));
+
+                const missionComplete = await screen.findByText(/mission complete/i, {}, { timeout: 500 })
+                    .then(() => true)
+                    .catch(() => false);
+
+                if (missionComplete) break;
+
+                const continueButton = await screen.findByRole('button', { name: /continue/i });
+                await user.click(continueButton);
+            }
+
+            // Should see mission complete again
+            await waitFor(() => {
+                expect(screen.getByText(/mission complete/i)).toBeInTheDocument();
+            }, { timeout: 5000 });
+
+            // Should NOT see the green 50% milestone again on mission 2
+            // The key assertion: 50% Mastery should NOT appear on mission 2
+            const hasFiftyPercentAgain = screen.queryByText(/50% Mastery/);
+            expect(hasFiftyPercentAgain).toBeNull();
+        });
+
+        it('should not repeat milestone after page reload', async () => {
+            const user = userEvent.setup({ delay: null });
+
+            // Pre-seed level 0 cards to set up a near-50% threshold state.
+            const now = Date.now();
+            const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+            // 12 mastered cards for level 0 (48%)
+            const masteredCardIds = [
+                'addition-0-0', 'addition-0-1', 'addition-0-2', 'addition-0-3',
+                'addition-0-4', 'addition-0-5', 'addition-0-6', 'addition-0-7',
+                'addition-0-8', 'addition-0-9', 'addition-0-10', 'addition-0-11',
+            ];
+            const masteredCards = masteredCardIds.map(id => {
+                const parts = id.split('-');
+                const op1 = Number(parts[1]);
+                const op2 = Number(parts[2]);
+                return {
+                    problem: {
+                        id,
+                        operand1: op1,
+                        operand2: op2,
+                        operation: 'addition' as const,
+                        correctAnswer: op1 + op2,
+                    },
+                    easeFactor: 2.5,
+                    interval: 30,
+                    repetitions: 5,
+                    nextReview: now + THIRTY_DAYS_MS,
+                    lastReviewed: now - 24 * 60 * 60 * 1000,
+                    totalAttempts: 5,
+                    correctAttempts: 5,
+                    averageResponseTime: 2000,
+                };
+            });
+
+            // 10 ready-to-master Level 0 cards
+            const readyToMasterIds = [
+                'addition-0-12', 'addition-1-0', 'addition-2-0', 'addition-3-0',
+                'addition-4-0', 'addition-5-0', 'addition-6-0', 'addition-7-0',
+                'addition-8-0', 'addition-9-0',
+            ];
+            const readyToMasterCards = readyToMasterIds.map(id => {
+                const parts = id.split('-');
+                const op1 = Number(parts[1]);
+                const op2 = Number(parts[2]);
+                return {
+                    problem: {
+                        id,
+                        operand1: op1,
+                        operand2: op2,
+                        operation: 'addition' as const,
+                        correctAnswer: op1 + op2,
+                    },
+                    easeFactor: 2.5,
+                    interval: 6,
+                    repetitions: 2,
+                    nextReview: now - 1000,
+                    lastReviewed: now - 7 * 24 * 60 * 60 * 1000,
+                    totalAttempts: 2,
+                    correctAttempts: 2,
+                    averageResponseTime: 3000,
+                };
+            });
+
+            await db.cards.bulkPut([...masteredCards, ...readyToMasterCards]);
+
+            // FIRST SESSION
+            const { unmount } = render(<Game />);
+
+            // Accept and complete mission 1
+            await waitFor(() => {
+                expect(screen.getByRole('button', { name: /help \w+!/i })).toBeInTheDocument();
+            });
+            await user.click(screen.getByRole('button', { name: /help \w+!/i }));
+
+            for (let i = 0; i < 12; i++) {
+                await waitFor(() => {
+                    expect(screen.getByText(/= \?/)).toBeInTheDocument();
+                }, { timeout: 3000 });
+
+                const problemText = screen.getByText(/\d+\s*[+\-×÷]\s*\d+/).textContent || '';
+                const match = problemText.match(/(\d+)\s*\+\s*(\d+)/);
+                if (!match) throw new Error('Could not parse problem');
+
+                const correctAnswer = parseInt(match[1]) + parseInt(match[2]);
+                const input = screen.getByPlaceholderText('Your answer');
+                await user.clear(input);
+                await user.type(input, correctAnswer.toString());
+                await user.click(screen.getByRole('button', { name: /submit/i }));
+
+                const missionComplete = await screen.findByText(/mission complete/i, {}, { timeout: 500 })
+                    .then(() => true)
+                    .catch(() => false);
+
+                if (missionComplete) break;
+
+                const continueButton = await screen.findByRole('button', { name: /continue/i });
+                await user.click(continueButton);
+            }
+
+            // Verify mission 1 shows 50% milestone
+            await waitFor(() => {
+                expect(screen.getByText(/mission complete/i)).toBeInTheDocument();
+            });
+            expect(screen.getByText(/50% Mastery/)).toBeInTheDocument();
+
+            // Simulate page refresh by unmounting and remounting
+            unmount();
+            await new Promise(resolve => setTimeout(resolve, 100)); // Wait for cleanup
+
+            // SECOND SESSION (simulating page reload)
+            render(<Game />);
+
+            // Accept and complete a new mission
+            await waitFor(() => {
+                expect(screen.getByRole('button', { name: /help \w+!/i })).toBeInTheDocument();
+            });
+            await user.click(screen.getByRole('button', { name: /help \w+!/i }));
+
+            for (let i = 0; i < 12; i++) {
+                await waitFor(() => {
+                    expect(screen.getByText(/= \?/)).toBeInTheDocument();
+                }, { timeout: 3000 });
+
+                const problemText = screen.getByText(/\d+\s*[+\-×÷]\s*\d+/).textContent || '';
+                const match = problemText.match(/(\d+)\s*\+\s*(\d+)/);
+                if (!match) throw new Error('Could not parse problem');
+
+                const correctAnswer = parseInt(match[1]) + parseInt(match[2]);
+                const input = screen.getByPlaceholderText('Your answer');
+                await user.clear(input);
+                await user.type(input, correctAnswer.toString());
+                await user.click(screen.getByRole('button', { name: /submit/i }));
+
+                const missionComplete = await screen.findByText(/mission complete/i, {}, { timeout: 500 })
+                    .then(() => true)
+                    .catch(() => false);
+
+                if (missionComplete) break;
+
+                const continueButton = await screen.findByRole('button', { name: /continue/i });
+                await user.click(continueButton);
+            }
+
+            await waitFor(() => {
+                expect(screen.getByText(/mission complete/i)).toBeInTheDocument();
+            });
+
+            // After page reload, 50% should NOT appear again
+            const hasFiftyPercentAgain = screen.queryByText(/50% Mastery/);
+            expect(hasFiftyPercentAgain).toBeNull();
+        });
+
+        it('should capture correct pre-mission state when starting new mission', async () => {
+            const user = userEvent.setup({ delay: null });
+
+            // This test specifically checks that capturePreMissionState receives
+            // the UPDATED cards after mission 1, not stale cards
+            const now = Date.now();
+            const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+            // 12 mastered cards for level 0 (48%)
+            const masteredCardIds = [
+                'addition-0-0', 'addition-0-1', 'addition-0-2', 'addition-0-3',
+                'addition-0-4', 'addition-0-5', 'addition-0-6', 'addition-0-7',
+                'addition-0-8', 'addition-0-9', 'addition-0-10', 'addition-0-11',
+            ];
+            const masteredCards = masteredCardIds.map(id => {
+                const parts = id.split('-');
+                const op1 = Number(parts[1]);
+                const op2 = Number(parts[2]);
+                return {
+                    problem: {
+                        id,
+                        operand1: op1,
+                        operand2: op2,
+                        operation: 'addition' as const,
+                        correctAnswer: op1 + op2,
+                    },
+                    easeFactor: 2.5,
+                    interval: 30,
+                    repetitions: 5,
+                    nextReview: now + THIRTY_DAYS_MS,
+                    lastReviewed: now - 24 * 60 * 60 * 1000,
+                    totalAttempts: 5,
+                    correctAttempts: 5,
+                    averageResponseTime: 2000,
+                };
+            });
+
+            const readyToMasterIds = [
+                'addition-0-12', 'addition-1-0', 'addition-2-0', 'addition-3-0',
+                'addition-4-0', 'addition-5-0', 'addition-6-0', 'addition-7-0',
+                'addition-8-0', 'addition-9-0',
+            ];
+            const readyToMasterCards = readyToMasterIds.map(id => {
+                const parts = id.split('-');
+                const op1 = Number(parts[1]);
+                const op2 = Number(parts[2]);
+                return {
+                    problem: {
+                        id,
+                        operand1: op1,
+                        operand2: op2,
+                        operation: 'addition' as const,
+                        correctAnswer: op1 + op2,
+                    },
+                    easeFactor: 2.5,
+                    interval: 6,
+                    repetitions: 2,
+                    nextReview: now - 1000,
+                    lastReviewed: now - 7 * 24 * 60 * 60 * 1000,
+                    totalAttempts: 2,
+                    correctAttempts: 2,
+                    averageResponseTime: 3000,
+                };
+            });
+
+            await db.cards.bulkPut([...masteredCards, ...readyToMasterCards]);
+
+            render(<Game />);
+
+            // Complete mission 1
+            await waitFor(() => {
+                expect(screen.getByRole('button', { name: /help \w+!/i })).toBeInTheDocument();
+            });
+            await user.click(screen.getByRole('button', { name: /help \w+!/i }));
+
+            for (let i = 0; i < 12; i++) {
+                await waitFor(() => {
+                    expect(screen.getByText(/= \?/)).toBeInTheDocument();
+                }, { timeout: 3000 });
+
+                const problemText = screen.getByText(/\d+\s*[+\-×÷]\s*\d+/).textContent || '';
+                const match = problemText.match(/(\d+)\s*\+\s*(\d+)/);
+                if (!match) throw new Error('Could not parse problem');
+
+                const correctAnswer = parseInt(match[1]) + parseInt(match[2]);
+                const input = screen.getByPlaceholderText('Your answer');
+                await user.clear(input);
+                await user.type(input, correctAnswer.toString());
+                await user.click(screen.getByRole('button', { name: /submit/i }));
+
+                const missionComplete = await screen.findByText(/mission complete/i, {}, { timeout: 500 })
+                    .then(() => true)
+                    .catch(() => false);
+
+                if (missionComplete) break;
+
+                const continueButton = await screen.findByRole('button', { name: /continue/i });
+                await user.click(continueButton);
+            }
+
+            await waitFor(() => {
+                expect(screen.getByText(/mission complete/i)).toBeInTheDocument();
+            });
+            expect(screen.getByText(/50% Mastery/)).toBeInTheDocument();
+
+            // KEY CHECK: After mission 1 shows 50%, clicking "Help Another Animal"
+            // should capture the UPDATED mastery (>50%), not 48%
+            //
+            // If there's a stale closure bug, capturePreMissionState would receive
+            // cards with 48% mastery (from before mission 1), causing 50% to trigger again.
+
+            await user.click(screen.getByRole('button', { name: /help another animal/i }));
+
+            // The console log from capturePreMissionState should show >50%
+            // If it shows 48%, we have a stale closure bug
+
+            // Accept mission 2
+            await waitFor(() => {
+                expect(screen.getByRole('button', { name: /help \w+!/i })).toBeInTheDocument();
+            });
+            await user.click(screen.getByRole('button', { name: /help \w+!/i }));
+
+            // Complete mission 2
+            for (let i = 0; i < 12; i++) {
+                await waitFor(() => {
+                    expect(screen.getByText(/= \?/)).toBeInTheDocument();
+                }, { timeout: 3000 });
+
+                const problemText = screen.getByText(/\d+\s*[+\-×÷]\s*\d+/).textContent || '';
+                const match = problemText.match(/(\d+)\s*\+\s*(\d+)/);
+                if (!match) throw new Error('Could not parse problem');
+
+                const correctAnswer = parseInt(match[1]) + parseInt(match[2]);
+                const input = screen.getByPlaceholderText('Your answer');
+                await user.clear(input);
+                await user.type(input, correctAnswer.toString());
+                await user.click(screen.getByRole('button', { name: /submit/i }));
+
+                const missionComplete = await screen.findByText(/mission complete/i, {}, { timeout: 500 })
+                    .then(() => true)
+                    .catch(() => false);
+
+                if (missionComplete) break;
+
+                const continueButton = await screen.findByRole('button', { name: /continue/i });
+                await user.click(continueButton);
+            }
+
+            await waitFor(() => {
+                expect(screen.getByText(/mission complete/i)).toBeInTheDocument();
+            });
+
+            // If capturePreMissionState received correct (updated) cards,
+            // this will NOT show 50% again
+            const hasFiftyPercent = screen.queryByText(/50% Mastery/);
+            expect(hasFiftyPercent).toBeNull();
+        });
+
+        it('should not repeat milestone when starting from All Caught Up screen', async () => {
+            const user = userEvent.setup({ delay: null });
+
+            // This test reproduces the bug: starting from "All Caught Up" doesn't
+            // call capturePreMissionState, so stale pre-mission mastery is used.
+            //
+            // Setup: All cards are already caught up (no due cards), mastery at 100%.
+            // When user clicks "Bonus Practice" from All Caught Up screen,
+            // handleBonusPractice is called but it DOESN'T call capturePreMissionState.
+            // The preMissionMastery ref still has 0% (initial empty map state).
+            // After completing bonus mission, getMilestonesAchieved compares 0% vs 100%,
+            // which triggers ALL milestones even though we've already passed them all.
+
+            const now = Date.now();
+            const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
+
+            // Generate ALL possible cards for addition with maxNumber=12
+            // and make them all caught up (nextReview in future)
+            // This guarantees we see the "All Caught Up" screen immediately
+            const allCards: { id: string; op1: number; op2: number }[] = [];
+            for (let op1 = 0; op1 <= 12; op1++) {
+                for (let op2 = 0; op2 <= 12; op2++) {
+                    allCards.push({ id: `addition-${op1}-${op2}`, op1, op2 });
+                }
+            }
+
+            const caughtUpCards = allCards.map(({ id, op1, op2 }) => ({
+                problem: {
+                    id,
+                    operand1: op1,
+                    operand2: op2,
+                    operation: 'addition' as const,
+                    correctAnswer: op1 + op2,
+                },
+                easeFactor: 2.5,
+                interval: 30,
+                repetitions: 5,
+                nextReview: now + THIRTY_DAYS_MS, // Not due = all caught up
+                lastReviewed: now - 24 * 60 * 60 * 1000,
+                totalAttempts: 5,
+                correctAttempts: 5,
+                averageResponseTime: 2000,
+            }));
+
+            await db.cards.bulkPut(caughtUpCards);
+
+            render(<Game />);
+
+            // Should immediately see "All Caught Up" screen
+            await waitFor(() => {
+                expect(screen.getByText(/all caught up/i)).toBeInTheDocument();
+            });
+
+            // Click bonus practice button
+            const bonusButton = screen.getByRole('button', { name: /practice/i });
+            await user.click(bonusButton);
+
+            // Accept the bonus mission
+            await waitFor(() => {
+                expect(screen.getByRole('button', { name: /help \w+!/i })).toBeInTheDocument();
+            });
+            await user.click(screen.getByRole('button', { name: /help \w+!/i }));
+
+            // Complete the bonus mission
+            for (let i = 0; i < 12; i++) {
+                await waitFor(() => {
+                    expect(screen.getByText(/= \?/)).toBeInTheDocument();
+                }, { timeout: 3000 });
+
+                const problemText = screen.getByText(/\d+\s*[+\-×÷]\s*\d+/).textContent || '';
+                const match = problemText.match(/(\d+)\s*\+\s*(\d+)/);
+                if (!match) throw new Error('Could not parse problem');
+
+                const correctAnswer = parseInt(match[1]) + parseInt(match[2]);
+                const input = screen.getByPlaceholderText('Your answer');
+                await user.clear(input);
+                await user.type(input, correctAnswer.toString());
+                await user.click(screen.getByRole('button', { name: /submit/i }));
+
+                const missionComplete = await screen.findByText(/mission complete/i, {}, { timeout: 500 })
+                    .then(() => true)
+                    .catch(() => false);
+
+                if (missionComplete) break;
+
+                const continueButton = await screen.findByRole('button', { name: /continue/i });
+                await user.click(continueButton);
+            }
+
+            await waitFor(() => {
+                expect(screen.getByText(/mission complete/i)).toBeInTheDocument();
+            });
+
+            // BUG: We're at 100% mastery for level 0, so no milestone should appear.
+            // But due to missing capturePreMissionState in handleBonusPractice,
+            // the preMissionMastery is empty/stale (0%), compared against 100%,
+            // which triggers EVERY milestone: 25%, 50%, 75%, 100%!
+            //
+            // Check that NO milestones appear (we're already at 100%)
+            const milestoneContainer = document.querySelector('.milestone-celebration');
+            expect(milestoneContainer).toBeNull();
+        });
     });
 
     describe('Progress Page Synchronization', () => {
