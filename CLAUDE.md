@@ -97,16 +97,21 @@ Settings are stored separately from card progress:
 
 **Mission Flow**:
 1. Mission intro with animal name, problem, and Sunshine introducing the mission
-2. Player solves math problems (10 problems per mission)
+2. Player solves math problems
 3. Progress tracked: `progress` accumulates based on answer quality (+2 for fast correct, +1 for slow correct)
-4. Animal visual state changes: `needs-help` → `improving` (at progress 4) → `rescued` (at progress 10)
-5. Mission completes when progress ≥ 10 OR totalAttempts ≥ 15
+4. Animal visual state changes: `needs-help` → `improving` (at `MISSION_LIMITS.improvingThreshold`) → `rescued` (at `MISSION_LIMITS.progressTarget`)
+5. Mission completes when progress ≥ `MISSION_LIMITS.progressTarget` OR totalAttempts ≥ `MISSION_LIMITS.maxAttempts`
+
+**Mission Limits** (configurable in `src/constants.ts`):
+- `progressTarget`: 10 - Progress needed to complete mission successfully
+- `improvingThreshold`: 4 - Progress at which animal state changes to "improving"
+- `maxAttempts`: 15 - Mission ends after this many attempts
 
 **Progress Calculation**:
 - Fast correct answer (<= targetTime): +2 progress, +1 sparkle
 - Slow correct answer (> targetTime): +1 progress
 - Incorrect answer: +0 progress
-- Mission success: progress ≥ 10
+- Mission success: progress ≥ `MISSION_LIMITS.progressTarget`
 
 **Sparkles System**:
 - Awarded 1 sparkle per fast correct answer

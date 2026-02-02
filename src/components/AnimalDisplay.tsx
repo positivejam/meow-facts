@@ -1,5 +1,6 @@
 import { AnimalSVG } from './AnimalSVG';
 import { getAnimalStateFromProgress } from '../utils/rescue';
+import { MISSION_LIMITS } from '../constants';
 
 interface AnimalDisplayProps {
     animalType: 'kitten' | 'puppy' | 'snail';
@@ -9,8 +10,8 @@ interface AnimalDisplayProps {
 }
 
 export function AnimalDisplay({ animalType, progress, animalName, animate = false }: AnimalDisplayProps) {
-    // Convert 0-10 progress to 0-1 for SVG
-    const svgProgress = Math.min(1, progress / 10);
+    // Convert progress to 0-1 for SVG
+    const svgProgress = Math.min(1, progress / MISSION_LIMITS.progressTarget);
 
     // Derive state from progress for CSS classes
     const state = getAnimalStateFromProgress(progress);

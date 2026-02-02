@@ -131,7 +131,7 @@ describe('Game - Critical User Flows', () => {
             await user.click(screen.getByRole('button', { name: /help \w+!/i }));
 
             // Answer problems correctly until mission completes
-            // The mission completes at progress 10 (5 fast correct or 10 correct total)
+            // The mission completes at MISSION_LIMITS.progressTarget (see src/constants.ts)
             for (let i = 0; i < 12; i++) {
                 // Wait for problem
                 await waitFor(() => {
@@ -1225,7 +1225,7 @@ describe('Game - Critical User Flows', () => {
             await user.click(screen.getByRole('button', { name: /help \w+!/i }));
 
             // Complete the mission - only one card (0+0), answer is always 0
-            // Answer until mission completes (5 fast correct or 10 correct total)
+            // Answer until mission completes (see MISSION_LIMITS in src/constants.ts)
             for (let i = 0; i < 5; i++) {
                 // Wait for problem
                 await waitFor(() => {

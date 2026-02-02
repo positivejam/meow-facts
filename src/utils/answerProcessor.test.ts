@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import type { MathFactCard, RescueMission, SparklesData } from '../types/game';
 import { processAnswer } from './answerProcessor';
+import { MISSION_LIMITS } from '../constants';
 
 function createTestCard(operand1: number, operand2: number): MathFactCard {
     return {
@@ -134,31 +135,31 @@ describe('processAnswer', () => {
     });
 
     describe('mission completion', () => {
-        it('sets justCompleted when progress reaches 10', () => {
+        it('sets justCompleted when progress reaches progressTarget', () => {
             const card = createTestCard(3, 5);
-            const mission = createTestMission({ progress: 9 });
+            const mission = createTestMission({ progress: MISSION_LIMITS.progressTarget - 1 });
 
-            // Slow correct = +1, bringing progress from 9 to 10
+            // Slow correct = +1, bringing progress to progressTarget
             const result = processAnswer(card, 8, mission, TARGET_TIME, BASE_SPARKLES, 1000, 7000);
 
-            expect(result.updatedMission.progress).toBe(10);
+            expect(result.updatedMission.progress).toBe(MISSION_LIMITS.progressTarget);
             expect(result.justCompleted).toBe(true);
             expect(result.updatedMission.completedAt).toBe(7000);
         });
 
-        it('caps progress at 10', () => {
+        it('caps progress at progressTarget', () => {
             const card = createTestCard(3, 5);
-            const mission = createTestMission({ progress: 9 });
+            const mission = createTestMission({ progress: MISSION_LIMITS.progressTarget - 1 });
 
-            // Fast correct = +2, but progress should cap at 10
+            // Fast correct = +2, but progress should cap at progressTarget
             const result = processAnswer(card, 8, mission, TARGET_TIME, BASE_SPARKLES, 1000, 3000);
 
-            expect(result.updatedMission.progress).toBe(10);
+            expect(result.updatedMission.progress).toBe(MISSION_LIMITS.progressTarget);
         });
 
         it('does not set justCompleted if mission was already completed', () => {
             const card = createTestCard(3, 5);
-            const mission = createTestMission({ progress: 10, completedAt: 5000 });
+            const mission = createTestMission({ progress: MISSION_LIMITS.progressTarget, completedAt: 5000 });
 
             const result = processAnswer(card, 8, mission, TARGET_TIME, BASE_SPARKLES, 1000, 3000);
 

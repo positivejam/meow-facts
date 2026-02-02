@@ -1,10 +1,11 @@
 import type { AnimalState, RescueMission } from '../types/game';
+import { MISSION_LIMITS } from '../constants';
 
 export function getAnimalStateFromProgress(progress: number): AnimalState {
-    if (progress >= 10) {
+    if (progress >= MISSION_LIMITS.progressTarget) {
         return 'rescued';
     }
-    if (progress >= 4) {
+    if (progress >= MISSION_LIMITS.improvingThreshold) {
         return 'improving';
     }
     return 'needs-help';
@@ -14,13 +15,13 @@ export function isMissionComplete(
     progress: number,
     totalAttempts: number
 ): boolean {
-    // Success condition: progress reached 10
-    if (progress >= 10) {
+    // Success condition: progress reached target
+    if (progress >= MISSION_LIMITS.progressTarget) {
         return true;
     }
 
     // Max attempts reached
-    if (totalAttempts >= 15) {
+    if (totalAttempts >= MISSION_LIMITS.maxAttempts) {
         return true;
     }
 
@@ -28,7 +29,7 @@ export function isMissionComplete(
 }
 
 export function isMissionSuccessful(progress: number): boolean {
-    return progress >= 10;
+    return progress >= MISSION_LIMITS.progressTarget;
 }
 
 export function createNewMission(

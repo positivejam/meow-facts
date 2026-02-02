@@ -5,6 +5,7 @@ import { updateCard } from './spacedRepetition';
 import { isMissionSuccessful } from './rescue';
 import { awardSparkles, SPARKLES_PER_FAST_CORRECT } from './sparkles';
 import { getSunshineDialogue } from './sunshine';
+import { MISSION_LIMITS } from '../constants';
 
 export interface AnswerResult {
     updatedMission: RescueMission;
@@ -42,7 +43,7 @@ export function processAnswer(
 
     const updatedMission: RescueMission = {
         ...currentMission,
-        progress: Math.min(10, currentMission.progress + progressIncrement),
+        progress: Math.min(MISSION_LIMITS.progressTarget, currentMission.progress + progressIncrement),
         correctAnswers: currentMission.correctAnswers + (isCorrect ? 1 : 0),
         fastCorrectAnswers: currentMission.fastCorrectAnswers + (isFastCorrect ? 1 : 0),
         totalAttempts: currentMission.totalAttempts + 1,
