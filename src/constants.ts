@@ -10,11 +10,11 @@ export const MAX_LEVEL = 12;
  */
 export const MISSION_LIMITS = {
     /** Progress needed to complete mission successfully (e.g., 5 fast correct at +2 each, or 10 slow correct at +1 each) */
-    progressTarget: 10,
+    progressTarget: 16,
     /** Progress at which animal state changes from "needs-help" to "improving" */
     improvingThreshold: 4,
     /** Mission ends after this many attempts, even if not successful */
-    maxAttempts: 15,
+    maxAttempts: 20,
 } as const;
 
 export type MissionLimits = typeof MISSION_LIMITS;
