@@ -1,12 +1,66 @@
 import { useState } from 'react';
 import type { MathFactCard, Operation } from '../types/game';
 import { MAX_LEVEL } from '../constants';
-import { calculateOverallProgress } from '../utils/levelProgress';
+import { calculateOverallProgress, type OverallProgressResult } from '../utils/levelProgress';
 
 interface ProgressPageProps {
     cards: MathFactCard[];
     enabledNumbers?: number[];
     onClose: () => void;
+}
+
+interface OperationProgressBarProps {
+    label: string;
+    operation: Operation;
+    progress: OverallProgressResult;
+    selectedOperation: Operation;
+    selectedLevel: number;
+    enabledNumbers?: number[];
+    onSegmentClick: (operation: Operation, level: number) => void;
+}
+
+function OperationProgressBar({
+    label,
+    operation,
+    progress,
+    selectedOperation,
+    selectedLevel,
+    enabledNumbers,
+    onSegmentClick,
+}: OperationProgressBarProps) {
+    const allComplete = progress.currentLevel > MAX_LEVEL;
+    const displayCurrentLevel = allComplete ? MAX_LEVEL : progress.currentLevel;
+
+    return (
+        <div className="operation-progress">
+            <span className="operation-label">{label}</span>
+            <div className={`primary-progress-bar ${selectedOperation === operation ? 'active' : ''}`}>
+                {progress.allLevelProgress.map((levelProgress) => {
+                    const isCompleted = progress.completedLevels.includes(levelProgress.level);
+                    const isCurrent = levelProgress.level === displayCurrentLevel && !allComplete;
+                    const isSelected = selectedOperation === operation && levelProgress.level === selectedLevel;
+                    const isEnabled = !enabledNumbers || enabledNumbers.includes(levelProgress.level);
+
+                    let className = 'primary-progress-segment';
+                    if (isCompleted) className += ' completed';
+                    if (isCurrent) className += ' current';
+                    if (isSelected) className += ' selected';
+                    if (!isEnabled) className += ' disabled';
+
+                    return (
+                        <div
+                            key={levelProgress.level}
+                            className={className}
+                            title={`Level ${levelProgress.level}: ${Math.round(levelProgress.masteryPercent)}%${!isEnabled ? ' (not practicing)' : ''}`}
+                            onClick={() => onSegmentClick(operation, levelProgress.level)}
+                        >
+                            {levelProgress.level}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
 }
 
 export function ProgressPage({ cards, enabledNumbers, onClose }: ProgressPageProps) {
@@ -22,7 +76,7 @@ export function ProgressPage({ cards, enabledNumbers, onClose }: ProgressPagePro
     const [selectedOperation, setSelectedOperation] = useState<Operation>('addition');
     const [selectedLevel, setSelectedLevel] = useState(() => {
         const isAllComplete = additionProgress.currentLevel > MAX_LEVEL;
-        return isAllComplete ? 12 : additionProgress.currentLevel;
+        return isAllComplete ? MAX_LEVEL : additionProgress.currentLevel;
     });
 
     // Get progress for the selected operation
@@ -49,78 +103,34 @@ export function ProgressPage({ cards, enabledNumbers, onClose }: ProgressPagePro
                 <div className="progress-section">
                     <h3>Level Progress</h3>
 
-                    {/* Addition Progress Bar */}
-                    <div className="operation-progress">
-                        <span className="operation-label">Addition</span>
-                        <div className={`primary-progress-bar ${selectedOperation === 'addition' ? 'active' : ''}`}>
-                            {additionProgress.allLevelProgress.map((levelProgress) => {
-                                const isCompleted = additionProgress.completedLevels.includes(levelProgress.level);
-                                const additionAllComplete = additionProgress.currentLevel > MAX_LEVEL;
-                                const displayAdditionCurrentLevel = additionAllComplete ? 12 : additionProgress.currentLevel;
-                                const isCurrent = levelProgress.level === displayAdditionCurrentLevel && !additionAllComplete;
-                                const isSelected = selectedOperation === 'addition' && levelProgress.level === selectedLevel;
-                                const isEnabled = !enabledNumbers || enabledNumbers.includes(levelProgress.level);
+                    <OperationProgressBar
+                        label="Addition"
+                        operation="addition"
+                        progress={additionProgress}
+                        selectedOperation={selectedOperation}
+                        selectedLevel={selectedLevel}
+                        enabledNumbers={enabledNumbers}
+                        onSegmentClick={handleSegmentClick}
+                    />
 
-                                let className = 'primary-progress-segment';
-                                if (isCompleted) className += ' completed';
-                                if (isCurrent) className += ' current';
-                                if (isSelected) className += ' selected';
-                                if (!isEnabled) className += ' disabled';
-
-                                return (
-                                    <div
-                                        key={levelProgress.level}
-                                        className={className}
-                                        title={`Level ${levelProgress.level}: ${Math.round(levelProgress.masteryPercent)}%${!isEnabled ? ' (not practicing)' : ''}`}
-                                        onClick={() => handleSegmentClick('addition', levelProgress.level)}
-                                    >
-                                        {levelProgress.level}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
-
-                    {/* Subtraction Progress Bar */}
-                    <div className="operation-progress">
-                        <span className="operation-label">Subtraction</span>
-                        <div className={`primary-progress-bar ${selectedOperation === 'subtraction' ? 'active' : ''}`}>
-                            {subtractionProgress.allLevelProgress.map((levelProgress) => {
-                                const isCompleted = subtractionProgress.completedLevels.includes(levelProgress.level);
-                                const subtractionAllComplete = subtractionProgress.currentLevel > MAX_LEVEL;
-                                const displaySubtractionCurrentLevel = subtractionAllComplete ? 12 : subtractionProgress.currentLevel;
-                                const isCurrent = levelProgress.level === displaySubtractionCurrentLevel && !subtractionAllComplete;
-                                const isSelected = selectedOperation === 'subtraction' && levelProgress.level === selectedLevel;
-                                const isEnabled = !enabledNumbers || enabledNumbers.includes(levelProgress.level);
-
-                                let className = 'primary-progress-segment';
-                                if (isCompleted) className += ' completed';
-                                if (isCurrent) className += ' current';
-                                if (isSelected) className += ' selected';
-                                if (!isEnabled) className += ' disabled';
-
-                                return (
-                                    <div
-                                        key={levelProgress.level}
-                                        className={className}
-                                        title={`Level ${levelProgress.level}: ${Math.round(levelProgress.masteryPercent)}%${!isEnabled ? ' (not practicing)' : ''}`}
-                                        onClick={() => handleSegmentClick('subtraction', levelProgress.level)}
-                                    >
-                                        {levelProgress.level}
-                                    </div>
-                                );
-                            })}
-                        </div>
-                    </div>
+                    <OperationProgressBar
+                        label="Subtraction"
+                        operation="subtraction"
+                        progress={subtractionProgress}
+                        selectedOperation={selectedOperation}
+                        selectedLevel={selectedLevel}
+                        enabledNumbers={enabledNumbers}
+                        onSegmentClick={handleSegmentClick}
+                    />
                 </div>
 
                 <div className="progress-section">
-                    <h3>Level {selectedLevel}: {selectedLevel}s ({selectedOperation === 'addition' ? '+' : '−'})</h3>
+                    <h3>Level {selectedLevel}: {selectedLevel}s ({selectedOperation === 'addition' ? '+' : '\u2212'})</h3>
                     <div className="progress-markers">
-                        <div className="progress-marker red" style={{ left: '0%' }}>▼</div>
-                        <div className="progress-marker orange" style={{ left: '25%' }}>▼</div>
-                        <div className="progress-marker green" style={{ left: '50%' }}>▼</div>
-                        <div className="progress-marker blue" style={{ left: '75%' }}>▼</div>
+                        <div className="progress-marker red" style={{ left: '0%' }}>&#x25BC;</div>
+                        <div className="progress-marker orange" style={{ left: '25%' }}>&#x25BC;</div>
+                        <div className="progress-marker green" style={{ left: '50%' }}>&#x25BC;</div>
+                        <div className="progress-marker blue" style={{ left: '75%' }}>&#x25BC;</div>
                     </div>
                     <div className="secondary-progress-bar">
                         <div className="progress-bar-marker-line orange" style={{ left: '25%' }} />

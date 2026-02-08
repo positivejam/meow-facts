@@ -3,6 +3,7 @@ import { cleanup, render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { Game } from './Game';
 import { db } from '../utils/db';
+import { MISSION_LIMITS } from '../constants';
 
 // Clean up DOM and close db after each test to prevent race conditions.
 // cleanup() unmounts synchronously, but useEffect async operations (loadSparkles,
@@ -132,7 +133,7 @@ describe('Game - Critical User Flows', () => {
 
             // Answer problems correctly until mission completes
             // The mission completes at MISSION_LIMITS.progressTarget (see src/constants.ts)
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < MISSION_LIMITS.maxAttempts; i++) {
                 // Wait for problem
                 await waitFor(() => {
                     expect(screen.getByText(/= \?/)).toBeInTheDocument();
@@ -433,7 +434,7 @@ describe('Game - Critical User Flows', () => {
             await user.click(screen.getByRole('button', { name: /help \w+!/i }));
 
             // Answer problems correctly until mission completes
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < MISSION_LIMITS.maxAttempts; i++) {
                 await waitFor(() => {
                     expect(screen.getByText(/= \?/)).toBeInTheDocument();
                 }, { timeout: 3000 });
@@ -554,7 +555,7 @@ describe('Game - Critical User Flows', () => {
             await user.click(screen.getByRole('button', { name: /help \w+!/i }));
 
             // Complete mission 1 - answer problems correctly until mission completes
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < MISSION_LIMITS.maxAttempts; i++) {
                 await waitFor(() => {
                     expect(screen.getByText(/= \?/)).toBeInTheDocument();
                 }, { timeout: 3000 });
@@ -602,7 +603,7 @@ describe('Game - Critical User Flows', () => {
             await user.click(screen.getByRole('button', { name: /help \w+!/i }));
 
             // Complete mission 2
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < MISSION_LIMITS.maxAttempts; i++) {
                 await waitFor(() => {
                     expect(screen.getByText(/= \?/)).toBeInTheDocument();
                 }, { timeout: 3000 });
@@ -636,7 +637,7 @@ describe('Game - Critical User Flows', () => {
             // The key assertion: 50% Mastery should NOT appear on mission 2
             const hasFiftyPercentAgain = screen.queryByText(/50% Mastery/);
             expect(hasFiftyPercentAgain).toBeNull();
-        });
+        }, 30000);
 
         it('should not repeat milestone after page reload', async () => {
             const user = userEvent.setup({ delay: null });
@@ -714,7 +715,7 @@ describe('Game - Critical User Flows', () => {
             });
             await user.click(screen.getByRole('button', { name: /help \w+!/i }));
 
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < MISSION_LIMITS.maxAttempts; i++) {
                 await waitFor(() => {
                     expect(screen.getByText(/= \?/)).toBeInTheDocument();
                 }, { timeout: 3000 });
@@ -758,7 +759,7 @@ describe('Game - Critical User Flows', () => {
             });
             await user.click(screen.getByRole('button', { name: /help \w+!/i }));
 
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < MISSION_LIMITS.maxAttempts; i++) {
                 await waitFor(() => {
                     expect(screen.getByText(/= \?/)).toBeInTheDocument();
                 }, { timeout: 3000 });
@@ -790,7 +791,7 @@ describe('Game - Critical User Flows', () => {
             // After page reload, 50% should NOT appear again
             const hasFiftyPercentAgain = screen.queryByText(/50% Mastery/);
             expect(hasFiftyPercentAgain).toBeNull();
-        });
+        }, 30000);
 
         it('should capture correct pre-mission state when starting new mission', async () => {
             const user = userEvent.setup({ delay: null });
@@ -867,7 +868,7 @@ describe('Game - Critical User Flows', () => {
             });
             await user.click(screen.getByRole('button', { name: /help \w+!/i }));
 
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < MISSION_LIMITS.maxAttempts; i++) {
                 await waitFor(() => {
                     expect(screen.getByText(/= \?/)).toBeInTheDocument();
                 }, { timeout: 3000 });
@@ -915,7 +916,7 @@ describe('Game - Critical User Flows', () => {
             await user.click(screen.getByRole('button', { name: /help \w+!/i }));
 
             // Complete mission 2
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < MISSION_LIMITS.maxAttempts; i++) {
                 await waitFor(() => {
                     expect(screen.getByText(/= \?/)).toBeInTheDocument();
                 }, { timeout: 3000 });
@@ -948,7 +949,7 @@ describe('Game - Critical User Flows', () => {
             // this will NOT show 50% again
             const hasFiftyPercent = screen.queryByText(/50% Mastery/);
             expect(hasFiftyPercent).toBeNull();
-        });
+        }, 30000);
 
         it('should not repeat milestone when starting from All Caught Up screen', async () => {
             const user = userEvent.setup({ delay: null });
@@ -1014,7 +1015,7 @@ describe('Game - Critical User Flows', () => {
             await user.click(screen.getByRole('button', { name: /help \w+!/i }));
 
             // Complete the bonus mission
-            for (let i = 0; i < 12; i++) {
+            for (let i = 0; i < MISSION_LIMITS.maxAttempts; i++) {
                 await waitFor(() => {
                     expect(screen.getByText(/= \?/)).toBeInTheDocument();
                 }, { timeout: 3000 });
@@ -1226,7 +1227,7 @@ describe('Game - Critical User Flows', () => {
 
             // Complete the mission - only one card (0+0), answer is always 0
             // Answer until mission completes (see MISSION_LIMITS in src/constants.ts)
-            for (let i = 0; i < 5; i++) {
+            for (let i = 0; i < MISSION_LIMITS.maxAttempts; i++) {
                 // Wait for problem
                 await waitFor(() => {
                     expect(screen.getByText(/= \?/)).toBeInTheDocument();
@@ -1270,6 +1271,6 @@ describe('Game - Critical User Flows', () => {
 
             // Should see ready for new challenges button (goes to settings)
             expect(screen.getByRole('button', { name: /challenges/i })).toBeInTheDocument();
-        });
+        }, 30000);
     });
 });

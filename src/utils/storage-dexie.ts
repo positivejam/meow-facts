@@ -48,15 +48,6 @@ export async function loadProgress(): Promise<StoredData | null> {
     }
 }
 
-export async function clearProgress(): Promise<void> {
-    try {
-        await db.cards.clear();
-        await db.sessions.clear();
-    } catch (error) {
-        console.error('Failed to clear progress:', error);
-    }
-}
-
 // ============================================================================
 // Rescue Progress (replaces rescueStorage.ts)
 // ============================================================================
@@ -141,16 +132,6 @@ export async function saveRescueProgress(data: Partial<RescueProgressData>): Pro
         await Promise.all(updates);
     } catch (error) {
         console.error('Failed to save rescue progress:', error);
-    }
-}
-
-export async function clearRescueProgress(): Promise<void> {
-    try {
-        await db.missions.clear();
-        await db.currentMissionData.delete(SINGLETON_ID);
-        await db.unlockStatusData.delete(SINGLETON_ID);
-    } catch (error) {
-        console.error('Failed to clear rescue progress:', error);
     }
 }
 

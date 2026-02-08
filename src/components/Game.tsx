@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import type { MathFactCard, GameSettings, ProblemAttempt, RescueMission, SparklesData, SunshineDialogueType } from '../types/game';
 import { MAX_LEVEL } from '../constants';
-import { generateAllFacts } from '../utils/cardGenerator';
+import { generateAllFacts, mergeCardsWithStoredProgress } from '../utils/cardGenerator';
 import { selectCards, selectBonusCards, getNextDueTime } from '../utils/spacedRepetition';
-import { saveProgress, loadProgress, saveRescueProgress, loadRescueProgress, loadSettings, saveSettings, loadSparkles as loadSparklesFromDB, saveSparkles as saveSparklesToDB } from '../utils/storage-dexie';
+import { saveProgress, loadProgress, saveRescueProgress, loadRescueProgress, loadSettings, saveSettings, loadSparkles, saveSparkles } from '../utils/storage-dexie';
 import type { FeedbackType } from '../utils/feedback';
 import { createNewMission, isMissionComplete, isMissionSuccessful, getMissionIntroDialogue, getMissionCompleteDialogue } from '../utils/rescue';
 import { getSunshineDialogue } from '../utils/sunshine';
@@ -121,46 +121,21 @@ export function Game() {
     // Initialize cards and mission when settings change
     useEffect(() => {
         const initializeCards = async () => {
-            // Always generate fresh cards based on current settings
-            // Then merge in spaced repetition data from storage for matching cards
+            // Generate fresh cards based on current settings, then merge stored progress
             const newCards = generateAllFacts(
                 settings.operation,
                 settings.maxNumber,
                 settings.enabledNumbers
             );
 
-            // Load stored progress and merge spaced repetition data
             const stored = await loadProgress();
-            let cardsToUse: MathFactCard[];
-            if (stored && stored.cards.length > 0) {
-                // Create a map of stored card data by problem ID
-                const storedCardMap = new Map(
-                    stored.cards.map(card => [card.problem.id, card])
-                );
-
-                // Merge stored data into new cards where IDs match
-                const mergedCards = newCards.map(newCard => {
-                    const storedCard = storedCardMap.get(newCard.problem.id);
-                    return storedCard || newCard; // Use stored data if exists, otherwise new card
-                });
-
-                cardsToUse = mergedCards;
-            } else {
-                cardsToUse = newCards;
-            }
-
+            const storedCards = stored?.cards ?? [];
+            const cardsToUse = mergeCardsWithStoredProgress(newCards, storedCards);
             setAllCards(cardsToUse);
 
             // Generate full card set for progress display (all levels, no filter)
             const fullCards = generateAllFacts(settings.operation, settings.maxNumber);
-            if (stored && stored.cards.length > 0) {
-                const storedMap = new Map(
-                    stored.cards.map(card => [card.problem.id, card])
-                );
-                setProgressCards(fullCards.map(card => storedMap.get(card.problem.id) || card));
-            } else {
-                setProgressCards(fullCards);
-            }
+            setProgressCards(mergeCardsWithStoredProgress(fullCards, storedCards));
 
             const selected = selectCards(cardsToUse, settings.cardsPerSession);
 
@@ -185,7 +160,7 @@ export function Game() {
             }
 
             // Load sparkles
-            const loadedSparkles = await loadSparklesFromDB();
+            const loadedSparkles = await loadSparkles();
             setSparkles(loadedSparkles);
 
             // Load previously mastered levels from unlock status
@@ -271,7 +246,7 @@ export function Game() {
 
         // --- Async persistence (does not affect render) ---
         if (result.newSparkles) {
-            await saveSparklesToDB(result.newSparkles);
+            await saveSparkles(result.newSparkles);
         }
         await saveProgress(updatedAllCards, []);
         await saveRescueProgress({ currentMission: result.updatedMission });

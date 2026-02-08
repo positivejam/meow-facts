@@ -1,5 +1,20 @@
 import type { MathFactCard, MathProblem, Operation } from '../types/game';
 
+/**
+ * Mapping of operation names to their display symbols.
+ * Uses proper Unicode characters for mathematical operators.
+ */
+export const OPERATION_SYMBOLS: Record<Operation, string> = {
+    addition: '+',
+    subtraction: '\u2212', // −
+    multiplication: '\u00D7', // ×
+    division: '\u00F7', // ÷
+};
+
+export function getOperationSymbol(operation: Operation): string {
+    return OPERATION_SYMBOLS[operation];
+}
+
 export function generateAllFacts(
     operation: Operation,
     maxNumber: number,
@@ -74,12 +89,23 @@ export function generateAllFacts(
 }
 
 export function formatProblem(problem: MathProblem): string {
-    const symbols: Record<Operation, string> = {
-        addition: '+',
-        subtraction: '-',
-        multiplication: '×',
-        division: '÷',
-    };
+    return `${problem.operand1} ${OPERATION_SYMBOLS[problem.operation]} ${problem.operand2}`;
+}
 
-    return `${problem.operand1} ${symbols[problem.operation]} ${problem.operand2}`;
+/**
+ * Merges freshly generated cards with stored spaced repetition progress.
+ * For each generated card, if a stored card with the same problem ID exists,
+ * the stored card (with its progress data) is used instead.
+ */
+export function mergeCardsWithStoredProgress(
+    generatedCards: MathFactCard[],
+    storedCards: MathFactCard[]
+): MathFactCard[] {
+    if (storedCards.length === 0) {
+        return generatedCards;
+    }
+    const storedCardMap = new Map(
+        storedCards.map(card => [card.problem.id, card])
+    );
+    return generatedCards.map(card => storedCardMap.get(card.problem.id) || card);
 }

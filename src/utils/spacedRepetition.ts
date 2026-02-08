@@ -207,34 +207,3 @@ export function getNextDueTime(allCards: MathFactCard[]): number | null {
     return Math.min(...futureCards.map(card => card.nextReview));
 }
 
-/**
- * Get statistics about the current state of all cards
- */
-export function getStats(cards: MathFactCard[]): {
-    mastered: number;
-    learning: number;
-    new: number;
-    totalAccuracy: number;
-    averageResponseTime: number;
-} {
-    const attempted = cards.filter(card => card.totalAttempts > 0);
-    const mastered = cards.filter(card => card.easeFactor >= 2.5 && card.repetitions >= 3).length;
-    const learning = attempted.length - mastered;
-    const newCards = cards.filter(card => card.totalAttempts === 0).length;
-
-    const totalCorrect = cards.reduce((sum, card) => sum + card.correctAttempts, 0);
-    const totalAttempts = cards.reduce((sum, card) => sum + card.totalAttempts, 0);
-    const totalAccuracy = totalAttempts > 0 ? totalCorrect / totalAttempts : 0;
-
-    const avgResponseTime = attempted.length > 0
-        ? attempted.reduce((sum, card) => sum + card.averageResponseTime, 0) / attempted.length
-        : 0;
-
-    return {
-        mastered,
-        learning,
-        new: newCards,
-        totalAccuracy,
-        averageResponseTime: avgResponseTime,
-    };
-}

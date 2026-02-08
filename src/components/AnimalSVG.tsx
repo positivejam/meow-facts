@@ -1,5 +1,7 @@
+import type { AnimalType } from '../types/game';
+
 interface AnimalSVGProps {
-    animalType: 'kitten' | 'puppy' | 'snail';
+    animalType: AnimalType;
     progress: number; // 0 to 1 (0% to 100%)
 }
 
@@ -273,26 +275,6 @@ function PuppySVG({ progress }: { progress: number }) {
                 transform="rotate(-15 130 50)"
                 style={{ transition: `fill ${animationTime} ease` }}
             />
-
-            {/* Inner ears */}
-            {/* <ellipse
-                cx="70"
-                cy="52"
-                rx="8"
-                ry="15"
-                fill={noseColor}
-                opacity="0.5"
-                style={{ transition: `fill ${animationTime} ease` }}
-            />
-            <ellipse
-                cx="130"
-                cy="52"
-                rx="8"
-                ry="15"
-                fill={noseColor}
-                opacity="0.5"
-                style={{ transition: `fill ${animationTime} ease` }}
-            /> */}
 
             {/* Snout */}
             <ellipse

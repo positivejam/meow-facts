@@ -45,22 +45,6 @@ export interface GameSession {
   endTime?: number;
 }
 
-export interface GameStats {
-  totalAttempts: number;
-  correctAnswers: number;
-  averageTime: number;
-  accuracy: number;
-  mastered: number; // Number of facts with easeFactor > 2.5
-  learning: number; // Number of facts being actively learned
-  new: number; // Number of facts never attempted
-}
-
-export interface ProgressData {
-  cards: Map<string, MathFactCard>;
-  sessions: GameSession[];
-  lastUpdated: number;
-}
-
 // Rescue Game Types
 export type AnimalState = 'needs-help' | 'improving' | 'rescued';
 export type AnimalType = 'kitten' | 'puppy' | 'snail';

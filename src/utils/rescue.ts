@@ -1,4 +1,4 @@
-import type { AnimalState, RescueMission } from '../types/game';
+import type { AnimalState, AnimalType, RescueMission } from '../types/game';
 import { MISSION_LIMITS } from '../constants';
 
 export function getAnimalStateFromProgress(progress: number): AnimalState {
@@ -33,7 +33,7 @@ export function isMissionSuccessful(progress: number): boolean {
 }
 
 export function createNewMission(
-    animalType: 'kitten' | 'puppy' | 'snail' = 'kitten',
+    animalType: AnimalType = 'kitten',
     location: 'living-room' = 'living-room'
 ): RescueMission {
     return {
@@ -52,7 +52,7 @@ export function createNewMission(
     };
 }
 
-function generateAnimalName(type: 'kitten' | 'puppy' | 'snail'): string {
+function generateAnimalName(type: AnimalType): string {
     const names = {
         kitten: ['Whiskers', 'Mittens', 'Luna', 'Shadow'],
         puppy: ['Buddy', 'Max', 'Bella', 'Charlie'],

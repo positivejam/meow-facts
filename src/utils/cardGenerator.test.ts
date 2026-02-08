@@ -112,6 +112,6 @@ describe('formatProblem', () => {
             operation: 'subtraction',
             correctAnswer: 4,
         });
-        expect(result).toBe('7 - 3');
+        expect(result).toBe('7 \u2212 3');
     });
 });

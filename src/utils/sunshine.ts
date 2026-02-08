@@ -1,4 +1,5 @@
-import type { SunshineDialogueType, MathProblem, Operation } from '../types/game';
+import type { SunshineDialogueType, MathProblem } from '../types/game';
+import { getOperationSymbol } from './cardGenerator';
 
 export const SUNSHINE_PHRASES = {
     intro: [
@@ -47,18 +48,8 @@ export const SUNSHINE_PHRASES = {
     ],
 } as const;
 
-function getOperationSymbol(operation: Operation): string {
-    switch (operation) {
-        case 'addition': return '+';
-        case 'subtraction': return '−';
-        case 'multiplication': return '×';
-        case 'division': return '÷';
-    }
-}
-
 function formatProblemEquation(problem: MathProblem): string {
-    const symbol = getOperationSymbol(problem.operation);
-    return `${problem.operand1} ${symbol} ${problem.operand2} = ${problem.correctAnswer}`;
+    return `${problem.operand1} ${getOperationSymbol(problem.operation)} ${problem.operand2} = ${problem.correctAnswer}`;
 }
 
 export function getSunshineDialogue(

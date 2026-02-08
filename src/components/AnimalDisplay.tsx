@@ -1,9 +1,10 @@
+import type { AnimalType } from '../types/game';
 import { AnimalSVG } from './AnimalSVG';
 import { getAnimalStateFromProgress } from '../utils/rescue';
 import { MISSION_LIMITS } from '../constants';
 
 interface AnimalDisplayProps {
-    animalType: 'kitten' | 'puppy' | 'snail';
+    animalType: AnimalType;
     progress: number; // 0-10 scale
     animalName?: string;
     animate?: boolean; // Whether to show celebration animation
