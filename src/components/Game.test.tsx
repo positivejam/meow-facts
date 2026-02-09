@@ -512,13 +512,12 @@ describe('Game - Critical User Flows', () => {
                 };
             });
 
-            // 10 cards at rep=2, interval=6 — ALL are level 0 cards (remaining ones)
-            // This ensures we stay in level 0 and don't trigger level 1 milestones
-            // Level 0 cards remaining: 0-12, 1-0, 2-0, 3-0, 4-0, 5-0, 6-0, 7-0, 8-0, 9-0, 10-0, 11-0, 12-0
+            // 6 cards at rep=2, interval=6 — ALL are level 0 cards.
+            // Capped at 6 so even if all become mastered (12+6=18, 72%), we cross
+            // 50% but NOT 75%, ensuring the green milestone is the one shown.
             const readyToMasterIds = [
-                'addition-0-12', 'addition-1-0', 'addition-2-0', 'addition-3-0',
-                'addition-4-0', 'addition-5-0', 'addition-6-0', 'addition-7-0',
-                'addition-8-0', 'addition-9-0',
+                'addition-0-12', 'addition-1-0', 'addition-2-0',
+                'addition-3-0', 'addition-4-0', 'addition-5-0',
             ];
             const readyToMasterCards = readyToMasterIds.map(id => {
                 const parts = id.split('-');
@@ -675,11 +674,10 @@ describe('Game - Critical User Flows', () => {
                 };
             });
 
-            // 10 ready-to-master Level 0 cards
+            // 6 ready-to-master Level 0 cards (capped to avoid crossing 75%)
             const readyToMasterIds = [
-                'addition-0-12', 'addition-1-0', 'addition-2-0', 'addition-3-0',
-                'addition-4-0', 'addition-5-0', 'addition-6-0', 'addition-7-0',
-                'addition-8-0', 'addition-9-0',
+                'addition-0-12', 'addition-1-0', 'addition-2-0',
+                'addition-3-0', 'addition-4-0', 'addition-5-0',
             ];
             const readyToMasterCards = readyToMasterIds.map(id => {
                 const parts = id.split('-');
@@ -830,10 +828,10 @@ describe('Game - Critical User Flows', () => {
                 };
             });
 
+            // 6 ready-to-master cards (capped to avoid crossing 75%)
             const readyToMasterIds = [
-                'addition-0-12', 'addition-1-0', 'addition-2-0', 'addition-3-0',
-                'addition-4-0', 'addition-5-0', 'addition-6-0', 'addition-7-0',
-                'addition-8-0', 'addition-9-0',
+                'addition-0-12', 'addition-1-0', 'addition-2-0',
+                'addition-3-0', 'addition-4-0', 'addition-5-0',
             ];
             const readyToMasterCards = readyToMasterIds.map(id => {
                 const parts = id.split('-');
@@ -1152,26 +1150,29 @@ describe('Game - Critical User Flows', () => {
             });
             await user.click(screen.getByRole('button', { name: /help \w+!/i }));
 
-            // Wait for first problem
-            await waitFor(() => {
-                expect(screen.getByText(/= \?/)).toBeInTheDocument();
-            });
+            // Answer 4 questions correctly. The session has 7 ready-to-master cards
+            // and 3 new cards (randomly shuffled). By pigeonhole, at least 1 of the
+            // first 4 must be a ready-to-master card, which becomes mastered after
+            // a fast correct answer (interval jumps to 16 days > 14-day threshold).
+            for (let i = 0; i < 4; i++) {
+                await waitFor(() => {
+                    expect(screen.getByText(/= \?/)).toBeInTheDocument();
+                }, { timeout: 3000 });
 
-            // Answer the question correctly (fast) - this should master a 7th card
-            const problemText = screen.getByText(/\d+\s*[+\-×÷]\s*\d+/).textContent || '';
-            const match = problemText.match(/(\d+)\s*\+\s*(\d+)/);
-            if (!match) throw new Error('Could not parse problem');
+                const problemText = screen.getByText(/\d+\s*[+\-×÷]\s*\d+/).textContent || '';
+                const match = problemText.match(/(\d+)\s*\+\s*(\d+)/);
+                if (!match) throw new Error('Could not parse problem');
 
-            const correctAnswer = parseInt(match[1]) + parseInt(match[2]);
-            const input = screen.getByPlaceholderText('Your answer');
-            await user.clear(input);
-            await user.type(input, correctAnswer.toString());
-            await user.click(screen.getByRole('button', { name: /submit/i }));
+                const correctAnswer = parseInt(match[1]) + parseInt(match[2]);
+                const input = screen.getByPlaceholderText('Your answer');
+                await user.clear(input);
+                await user.type(input, correctAnswer.toString());
+                await user.click(screen.getByRole('button', { name: /submit/i }));
 
-            // Wait for feedback
-            await waitFor(() => {
-                expect(screen.getByRole('button', { name: /continue/i })).toBeInTheDocument();
-            });
+                // Click Continue to move to next problem
+                const continueButton = await screen.findByRole('button', { name: /continue/i });
+                await user.click(continueButton);
+            }
 
             // Open Progress page again (📊 button)
             await user.click(screen.getByRole('button', { name: /📊|progress/i }));
