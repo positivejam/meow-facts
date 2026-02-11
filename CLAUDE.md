@@ -103,9 +103,9 @@ Settings are stored separately from card progress:
 5. Mission completes when progress ≥ `MISSION_LIMITS.progressTarget` OR totalAttempts ≥ `MISSION_LIMITS.maxAttempts`
 
 **Mission Limits** (configurable in `src/constants.ts`):
-- `progressTarget`: 10 - Progress needed to complete mission successfully
+- `progressTarget`: 16 - Progress needed to complete mission successfully (e.g., 8 fast correct at +2 each, or 16 slow correct at +1 each)
 - `improvingThreshold`: 4 - Progress at which animal state changes to "improving"
-- `maxAttempts`: 15 - Mission ends after this many attempts
+- `maxAttempts`: 20 - Mission ends after this many attempts
 
 **Progress Calculation**:
 - Fast correct answer (<= targetTime): +2 progress, +1 sparkle
