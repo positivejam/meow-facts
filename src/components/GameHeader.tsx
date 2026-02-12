@@ -20,10 +20,10 @@ export function GameHeader({
             <h1>Meow Facts{isBonusMode && <span className="bonus-badge">Bonus Practice!</span>}</h1>
             <SparklesCounter sparkles={sparklesTotal} recentlyEarned={recentlyEarned} />
             <button onClick={onProgressClick} className="progress-button">
-                📊
+                🐾
             </button>
             <button onClick={onSettingsClick} className="settings-button">
-                ⚙️
+                🪄
             </button>
         </div>
     );

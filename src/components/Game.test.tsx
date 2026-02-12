@@ -179,11 +179,11 @@ describe('Game - Critical User Flows', () => {
 
             // Open settings
             await waitFor(() => {
-                const settingsButton = screen.getByRole('button', { name: /⚙️|settings/i });
+                const settingsButton = screen.getByRole('button', { name: /🪄|settings/i });
                 expect(settingsButton).toBeInTheDocument();
             });
 
-            await user.click(screen.getByRole('button', { name: /⚙️|settings/i }));
+            await user.click(screen.getByRole('button', { name: /🪄|settings/i }));
 
             // Should see settings screen
             await waitFor(() => {
@@ -210,9 +210,9 @@ describe('Game - Critical User Flows', () => {
 
             // Open settings
             await waitFor(() => {
-                expect(screen.getByRole('button', { name: /⚙️|settings/i })).toBeInTheDocument();
+                expect(screen.getByRole('button', { name: /🪄|settings/i })).toBeInTheDocument();
             });
-            await user.click(screen.getByRole('button', { name: /⚙️|settings/i }));
+            await user.click(screen.getByRole('button', { name: /🪄|settings/i }));
 
             // Wait for settings screen
             await waitFor(() => {
@@ -268,9 +268,9 @@ describe('Game - Critical User Flows', () => {
 
             // Open settings
             await waitFor(() => {
-                expect(screen.getByRole('button', { name: /⚙️|settings/i })).toBeInTheDocument();
+                expect(screen.getByRole('button', { name: /🪄|settings/i })).toBeInTheDocument();
             });
-            await user.click(screen.getByRole('button', { name: /⚙️|settings/i }));
+            await user.click(screen.getByRole('button', { name: /🪄|settings/i }));
 
             // Wait for settings screen
             await waitFor(() => {
@@ -314,9 +314,9 @@ describe('Game - Critical User Flows', () => {
 
             // Open settings
             await waitFor(() => {
-                expect(screen.getByRole('button', { name: /⚙️|settings/i })).toBeInTheDocument();
+                expect(screen.getByRole('button', { name: /🪄|settings/i })).toBeInTheDocument();
             });
-            await user.click(screen.getByRole('button', { name: /⚙️|settings/i }));
+            await user.click(screen.getByRole('button', { name: /🪄|settings/i }));
 
             // Wait for settings screen
             await waitFor(() => {
@@ -1128,9 +1128,9 @@ describe('Game - Critical User Flows', () => {
             // First, verify the progress page shows the initial 6 mastered cards
             // Open Progress page before answering any questions
             await waitFor(() => {
-                expect(screen.getByRole('button', { name: /📊|progress/i })).toBeInTheDocument();
+                expect(screen.getByRole('button', { name: /🐾|progress/i })).toBeInTheDocument();
             });
-            await user.click(screen.getByRole('button', { name: /📊|progress/i }));
+            await user.click(screen.getByRole('button', { name: /🐾|progress/i }));
 
             await waitFor(() => {
                 expect(screen.getByText(/your progress/i)).toBeInTheDocument();
@@ -1175,7 +1175,7 @@ describe('Game - Critical User Flows', () => {
             }
 
             // Open Progress page again (📊 button)
-            await user.click(screen.getByRole('button', { name: /📊|progress/i }));
+            await user.click(screen.getByRole('button', { name: /🐾|progress/i }));
 
             await waitFor(() => {
                 expect(screen.getByText(/your progress/i)).toBeInTheDocument();
@@ -1201,9 +1201,9 @@ describe('Game - Critical User Flows', () => {
 
             // Open settings
             await waitFor(() => {
-                expect(screen.getByRole('button', { name: /⚙️|settings/i })).toBeInTheDocument();
+                expect(screen.getByRole('button', { name: /🪄|settings/i })).toBeInTheDocument();
             });
-            await user.click(screen.getByRole('button', { name: /⚙️|settings/i }));
+            await user.click(screen.getByRole('button', { name: /🪄|settings/i }));
 
             // Wait for settings screen
             await waitFor(() => {

@@ -336,16 +336,17 @@
 
 .settings-button {
     font-size: 1.5rem;
-    background: transparent;
+    background: rgba(168, 85, 247, 0.15);
     border: none;
+    border-radius: 20px;
     cursor: pointer;
-    padding: 8px;
-    opacity: 0.6;
-    transition: opacity 0.2s;
+    padding: 8px 16px;
+    transition: all 0.2s;
 }
 
 .settings-button:hover {
-    opacity: 1;
+    background: rgba(168, 85, 247, 0.25);
+    transform: translateY(-2px);
 }
 
 .settings-link-button {
@@ -1195,17 +1196,18 @@
 
 /* Header progress button */
 .progress-button {
-    background: none;
+    background: rgba(102, 126, 234, 0.15);
     border: none;
     font-size: 1.5rem;
     cursor: pointer;
-    padding: 8px;
-    border-radius: 8px;
-    transition: background 0.2s;
+    padding: 8px 16px;
+    border-radius: 20px;
+    transition: all 0.2s;
 }
 
 .progress-button:hover {
-    background: rgba(102, 126, 234, 0.1);
+    background: rgba(102, 126, 234, 0.25);
+    transform: translateY(-2px);
 }
 
 /* Danger Section */
