@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Meow Facts is a spaced repetition math practice app built with React, TypeScript, and Vite. It wraps an SM-2 spaced repetition algorithm in a rescue game narrative where players help animals (kittens, puppies) by solving math problems. The companion character "Sunshine" (a black cat) provides encouraging dialogue throughout.
+Meow Facts is a spaced repetition math practice app built with React, TypeScript, and Vite. It's deployed as a **PWA** (via `vite-plugin-pwa`) for offline-capable mobile use. It wraps an SM-2 spaced repetition algorithm in a rescue game narrative where players help animals (kittens, puppies, snails) by solving math problems. The companion character "Sunshine" (a black cat) provides encouraging dialogue throughout.
 
 ## Development Commands
 
@@ -59,6 +59,7 @@ npm run test -- -t "shows mission intro"
 3. **Storage** (`storage-dexie.ts`): Persists card progress, settings, rescue missions, and sparkles to IndexedDB using Dexie
 4. **Rescue Game** (`rescue.ts`, `sunshine.ts`, `sparkles.ts`): Wraps spaced repetition in narrative layer
 5. **Game State** (`Game.tsx`): Orchestrates the session flow, manages card state, and coordinates rescue missions
+6. **Types** (`types/game.ts`): Centralized type definitions for all game entities (cards, missions, settings, dialogue)
 
 ### Spaced Repetition Logic
 
