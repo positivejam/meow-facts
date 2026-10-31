@@ -112,6 +112,94 @@
     cursor: not-allowed;
 }
 
+/* Touch mode: stack input and keypad vertically */
+.answer-input.touch-mode {
+    flex-direction: column;
+    align-items: center;
+}
+
+.answer-input-row {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+/* Numeric Keypad */
+.numeric-keypad {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    width: 100%;
+    margin: 0 auto;
+}
+
+.keypad-digits {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+}
+
+@media (min-width: 768px) {
+    .keypad-digits {
+        grid-template-columns: repeat(10, 1fr);
+    }
+}
+
+.keypad-button {
+    font-size: 1.5rem;
+    font-weight: 700;
+    min-height: 48px;
+    min-width: 48px;
+    padding: 8px 14px;
+    background: white;
+    color: #667eea;
+    border: 2px solid #667eea;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.1s, transform 0.1s;
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+.keypad-button:active:not(:disabled) {
+    background: #f0f0ff;
+    transform: scale(0.95);
+}
+
+.keypad-button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.keypad-button.special {
+    width: 100%;
+    background: #f5f5f5;
+    border-color: #ccc;
+    color: #666;
+}
+
+.keypad-button.special:active:not(:disabled) {
+    background: #e8e8e8;
+}
+
+.keypad-button.submit {
+    width: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    font-size: 1.25rem;
+}
+
+.keypad-button.submit:active:not(:disabled) {
+    opacity: 0.9;
+    transform: scale(0.98);
+}
+
+.keypad-button.submit:disabled {
+    background: #ccc;
+    opacity: 1;
+}
+
 /* Feedback */
 .feedback {
     padding: 30px;
@@ -1335,6 +1423,13 @@
     .help-button {
         font-size: 1.5rem;
         padding: 14px 36px;
+    }
+
+    .keypad-button {
+        font-size: 1.25rem;
+        min-height: 44px;
+        min-width: 44px;
+        padding: 8px 12px;
     }
 }
 

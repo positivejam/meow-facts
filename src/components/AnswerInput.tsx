@@ -1,4 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
+import { useIsTouchDevice } from '../hooks/useIsTouchDevice';
+import { NumericKeypad } from './NumericKeypad';
 
 interface AnswerInputProps {
   onSubmit: (answer: number) => void;
@@ -8,6 +10,7 @@ interface AnswerInputProps {
 export function AnswerInput({ onSubmit, disabled = false }: AnswerInputProps) {
   const [answer, setAnswer] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+  const isTouchDevice = useIsTouchDevice();
 
   // Auto-focus input when component mounts or when it becomes enabled
   useEffect(() => {
@@ -18,6 +21,10 @@ export function AnswerInput({ onSubmit, disabled = false }: AnswerInputProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    submitAnswer();
+  };
+
+  const submitAnswer = () => {
     const numAnswer = parseInt(answer, 10);
 
     if (!isNaN(numAnswer)) {
@@ -34,21 +41,52 @@ export function AnswerInput({ onSubmit, disabled = false }: AnswerInputProps) {
     }
   };
 
+  const handleDigitPress = (digit: string) => {
+    setAnswer((prev) => prev + digit);
+    // Keep focus on input so physical keyboard still works
+    inputRef.current?.focus();
+  };
+
+  const handleBackspace = () => {
+    setAnswer((prev) => prev.slice(0, -1));
+    inputRef.current?.focus();
+  };
+
+  const handleKeypadSubmit = () => {
+    submitAnswer();
+    inputRef.current?.focus();
+  };
+
+  const canSubmit = answer !== '' && answer !== '-';
+
   return (
-    <form onSubmit={handleSubmit} className="answer-input">
-      <input
-        ref={inputRef}
-        type="text"
-        inputMode="numeric"
-        value={answer}
-        onChange={handleChange}
-        disabled={disabled}
-        placeholder="Your answer"
-        className="answer-field"
-      />
-      <button type="submit" disabled={disabled || answer === '' || answer === '-'} className="submit-button">
-        Submit
-      </button>
+    <form onSubmit={handleSubmit} className={`answer-input${isTouchDevice ? ' touch-mode' : ''}`}>
+      <div className="answer-input-row">
+        <input
+          ref={inputRef}
+          type="text"
+          inputMode={isTouchDevice ? 'none' : 'numeric'}
+          value={answer}
+          onChange={handleChange}
+          disabled={disabled}
+          placeholder="Your answer"
+          className="answer-field"
+        />
+        {!isTouchDevice && (
+          <button type="submit" disabled={disabled || !canSubmit} className="submit-button">
+            Submit
+          </button>
+        )}
+      </div>
+      {isTouchDevice && (
+        <NumericKeypad
+          onDigitPress={handleDigitPress}
+          onBackspace={handleBackspace}
+          onSubmit={handleKeypadSubmit}
+          disabled={disabled}
+          canSubmit={canSubmit}
+        />
+      )}
     </form>
   );
 }
