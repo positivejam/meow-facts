@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
-import type { MathFactCard, GameSettings, ProblemAttempt, RescueMission, SparklesData, SunshineDialogueType } from '../types/game';
-import { MAX_LEVEL } from '../constants';
-import { generateAllFacts, mergeCardsWithStoredProgress } from '../utils/cardGenerator';
+import type { MathFactCard, MathProblem, GameSettings, ProblemAttempt, RescueMission, SparklesData, SunshineDialogueType } from '../types/game';
+import { generateCards, mergeCardsWithStoredProgress } from '../utils/cardGenerator';
+import { createDefaultSettings } from '../utils/settings';
 import { selectCards, selectBonusCards, getNextDueTime } from '../utils/spacedRepetition';
 import { saveProgress, loadProgress, saveRescueProgress, loadRescueProgress, loadSettings, saveSettings, loadSparkles, saveSparkles } from '../utils/storage-dexie';
 import type { FeedbackType } from '../utils/feedback';
@@ -19,20 +19,12 @@ import { CompanionScene } from './CompanionScene';
 import { AllCaughtUp } from './AllCaughtUp';
 import { GameHeader } from './GameHeader';
 import { ProgressPage } from './ProgressPage';
-import { MilestoneBadge } from './MilestoneBadge';
-import { useMasteryMilestones, type MasteryMilestone } from '../hooks/useMasteryMilestones';
-
-const DEFAULT_SETTINGS: GameSettings = {
-    operation: 'addition',
-    maxNumber: MAX_LEVEL,
-    cardsPerSession: 10,
-    enabledNumbers: Array.from({ length: MAX_LEVEL + 1 }, (_, i) => i), // All numbers 0-MAX_LEVEL
-    targetTime: 5000, // 5 seconds
-};
+import { MasteredFactsBadge } from './MasteredFactsBadge';
+import { useNewlyMasteredFacts } from '../hooks/useNewlyMasteredFacts';
 
 export function Game() {
     // --- Settings & Card Data ---
-    const [settings, setSettings] = useState<GameSettings>(DEFAULT_SETTINGS);
+    const [settings, setSettings] = useState<GameSettings>(createDefaultSettings);
     const [allCards, setAllCards] = useState<MathFactCard[]>([]);
     const [progressCards, setProgressCards] = useState<MathFactCard[]>([]);
 
@@ -55,11 +47,10 @@ export function Game() {
     const [showMissionIntro, setShowMissionIntro] = useState(true);
     const [displayedProgress, setDisplayedProgress] = useState(0);
 
-    // --- Sparkles & Milestones ---
+    // --- Sparkles & Mastery Celebrations ---
     const [sparkles, setSparkles] = useState<SparklesData>({ total: 0, earnedThisSession: 0 });
-    const [achievedMilestones, setAchievedMilestones] = useState<MasteryMilestone[]>([]);
-    const [previouslyMasteredLevels, setPreviouslyMasteredLevels] = useState<Set<number>>(new Set());
-    const { capturePreMissionState, getMilestonesAchieved } = useMasteryMilestones();
+    const [newlyMasteredFacts, setNewlyMasteredFacts] = useState<MathProblem[]>([]);
+    const { capturePreMissionState, getNewlyMasteredFacts } = useNewlyMasteredFacts();
 
     // --- UI Visibility ---
     const [showSettings, setShowSettings] = useState(false);
@@ -94,8 +85,8 @@ export function Game() {
     }, []);
 
     const startNewMission = useCallback(async (selectNewCards = false) => {
-        // Clear previous milestones
-        setAchievedMilestones([]);
+        // Clear the previous mission's celebration
+        setNewlyMasteredFacts([]);
 
         // Select new cards only when starting a new mission after completing one
         // (not on initial load, since useEffect already selects cards)
@@ -112,7 +103,7 @@ export function Game() {
             setSessionCards(selected);
         }
 
-        // Capture mastery state before mission for milestone detection
+        // Capture which facts are already mastered, to celebrate newly mastered ones later
         capturePreMissionState(allCards);
 
         await initializeMissionState();
@@ -121,11 +112,10 @@ export function Game() {
     // Initialize cards and mission when settings change
     useEffect(() => {
         const initializeCards = async () => {
-            // Generate fresh cards based on current settings, then merge stored progress
-            const newCards = generateAllFacts(
+            // Generate cards for the selected chart facts, then merge stored progress
+            const newCards = generateCards(
                 settings.operation,
-                settings.maxNumber,
-                settings.enabledNumbers
+                settings.enabledFacts[settings.operation]
             );
 
             const stored = await loadProgress();
@@ -133,9 +123,17 @@ export function Game() {
             const cardsToUse = mergeCardsWithStoredProgress(newCards, storedCards);
             setAllCards(cardsToUse);
 
-            // Generate full card set for progress display (all levels, no filter)
-            const fullCards = generateAllFacts(settings.operation, settings.maxNumber);
+            // Every chart fact of both operations, for the Progress page charts
+            const fullCards = [...generateCards('addition'), ...generateCards('subtraction')];
             setProgressCards(mergeCardsWithStoredProgress(fullCards, storedCards));
+
+            // Nothing selected for this operation (e.g. Clear All, then a reload):
+            // send the player to Settings, where Start Practice stays disabled until they pick facts
+            if (cardsToUse.length === 0) {
+                setSessionCards([]);
+                setShowSettings(true);
+                return;
+            }
 
             const selected = selectCards(cardsToUse, settings.cardsPerSession);
 
@@ -152,7 +150,7 @@ export function Game() {
                 setShowAllCaughtUp(false);
                 setIsBonusMode(false);
 
-                // Capture mastery state before mission for milestone detection
+                // Capture which facts are already mastered, to celebrate newly mastered ones later
                 capturePreMissionState(cardsToUse);
 
                 // Initialize a new mission
@@ -162,12 +160,6 @@ export function Game() {
             // Load sparkles
             const loadedSparkles = await loadSparkles();
             setSparkles(loadedSparkles);
-
-            // Load previously mastered levels from unlock status
-            const rescueData = await loadRescueProgress();
-            setPreviouslyMasteredLevels(new Set(
-                rescueData.unlockStatus.masteredFactGroups.map(s => parseInt(s, 10))
-            ));
         };
 
         initializeCards();
@@ -185,7 +177,7 @@ export function Game() {
         setIsBonusMode(true);
         setShowAllCaughtUp(false);
 
-        // Capture mastery state before mission for milestone detection
+        // Capture which facts are already mastered, to celebrate newly mastered ones later
         capturePreMissionState(allCards);
 
         // Start a new mission for bonus practice
@@ -270,10 +262,9 @@ export function Game() {
     };
 
     const handleMissionComplete = async (completedMission: RescueMission, currentCards: MathFactCard[]) => {
-        // Calculate milestones synchronously BEFORE any await, so state updates
+        // Find newly mastered facts synchronously BEFORE any await, so state updates
         // are batched with the caller's updates in the same render cycle
-        const milestones = getMilestonesAchieved(currentCards, previouslyMasteredLevels);
-        setAchievedMilestones(milestones);
+        setNewlyMasteredFacts(getNewlyMasteredFacts(currentCards));
 
         // Save completed mission (async, happens in background)
         const rescueData = await loadRescueProgress();
@@ -281,27 +272,6 @@ export function Game() {
             completedMissions: [...rescueData.completedMissions, completedMission],
             currentMission: null,
         });
-
-        // Save newly mastered levels (first time reaching 100%)
-        const newlyMastered = milestones
-            .filter(m => m.milestone === 'mastered')
-            .map(m => m.level);
-
-        if (newlyMastered.length > 0) {
-            // Update local state
-            const updatedSet = new Set(previouslyMasteredLevels);
-            newlyMastered.forEach(level => updatedSet.add(level));
-            setPreviouslyMasteredLevels(updatedSet);
-
-            // Persist to database
-            const updatedGroups = [...updatedSet].map(String);
-            await saveRescueProgress({
-                unlockStatus: {
-                    ...rescueData.unlockStatus,
-                    masteredFactGroups: updatedGroups,
-                }
-            });
-        }
     };
 
     const handleRetryMission = async () => {
@@ -355,7 +325,8 @@ export function Game() {
         return (
             <ProgressPage
                 cards={progressCards}
-                enabledNumbers={settings.enabledNumbers}
+                enabledFacts={settings.enabledFacts}
+                initialOperation={settings.operation}
                 onClose={() => setShowProgress(false)}
             />
         );
@@ -394,8 +365,8 @@ export function Game() {
 
     if (missionComplete) {
         const completeDialogue = missionSuccessful
-            ? (achievedMilestones.length > 0
-                ? getSunshineDialogue(`milestone-${achievedMilestones[0].milestone}` as SunshineDialogueType, undefined, achievedMilestones[0].level)
+            ? (newlyMasteredFacts.length > 0
+                ? getSunshineDialogue('facts-mastered', undefined, newlyMasteredFacts.length)
                 : getMissionCompleteDialogue(currentMission))
             : `Great effort! ${currentMission.animalName} appreciates your help. Ready to try again?`;
 
@@ -415,7 +386,7 @@ export function Game() {
 
                     {missionSuccessful && (
                         <>
-                            <MilestoneBadge milestones={achievedMilestones} />
+                            <MasteredFactsBadge facts={newlyMasteredFacts} />
                             <StatsDisplay attempts={attempts} targetTime={settings.targetTime} />
                             <div className="sparkles-earned">
                                 ✨ Earned {sparkles.earnedThisSession} sparkles this session!

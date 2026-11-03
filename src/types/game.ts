@@ -21,11 +21,16 @@ export interface MathFactCard {
   averageResponseTime: number; // In milliseconds
 }
 
+/** Operations that have a fact chart and can be practiced. */
+export type PracticeOperation = 'addition' | 'subtraction';
+
+/** Card IDs (e.g. 'addition-3-5') selected for practice, per operation. */
+export type EnabledFacts = Record<PracticeOperation, string[]>;
+
 export interface GameSettings {
-  operation: Operation;
-  maxNumber: number;
+  operation: PracticeOperation;
   cardsPerSession: number;
-  enabledNumbers: number[]; // Which numbers to include in practice (e.g., [0, 1, 2])
+  enabledFacts: EnabledFacts; // Which chart facts to practice, chosen in Settings
   targetTime: number; // Target response time in milliseconds for "fast" answers
 }
 
@@ -76,10 +81,7 @@ export type SunshineDialogueType =
   | 'slow-correct'
   | 'incorrect'
   | 'rescue-complete'
-  | 'milestone-orange'
-  | 'milestone-green'
-  | 'milestone-blue'
-  | 'milestone-mastered';
+  | 'facts-mastered';
 
 export interface SunshineDialogue {
   type: SunshineDialogueType;

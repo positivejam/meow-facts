@@ -1,4 +1,5 @@
 import { db } from './db';
+import { normalizeSettings, type StoredSettings } from './settings';
 import type { MathFactCard, GameSession, RescueMission, UnlockStatus, GameSettings, SparklesData } from '../types/game';
 
 // Singleton ID for single-row tables
@@ -169,7 +170,9 @@ export async function saveSparkles(sparkles: SparklesData): Promise<void> {
 
 export async function loadSettings(): Promise<GameSettings | null> {
     try {
-        return (await db.settings.get(SINGLETON_ID)) ?? null;
+        // Stored rows may predate the fact charts, so normalize (and convert) them
+        const stored = await db.settings.get(SINGLETON_ID) as StoredSettings | undefined;
+        return stored ? normalizeSettings(stored) : null;
     } catch (error) {
         console.error('Failed to load settings:', error);
         return null;

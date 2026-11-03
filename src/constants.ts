@@ -1,8 +1,20 @@
 /**
- * The maximum level/number in the game.
- * Corresponds to fact tables 0s through 12s (13 total levels).
+ * The largest number on each side of the fact charts (0–10).
+ * Each operation's chart is an 11×11 grid of 121 facts:
+ * addition 0 + 0 through 10 + 10, subtraction 0 − 0 through 20 − 10.
  */
-export const MAX_LEVEL = 12;
+export const CHART_MAX = 10;
+
+/**
+ * Review-interval thresholds (in days) for a fact's mastery color.
+ * Never attempted = grey; interval below `yellow` = red;
+ * then yellow, green, and blue (mastered) at or above each threshold.
+ */
+export const MASTERY_INTERVAL_DAYS = {
+    yellow: 1,
+    green: 6,
+    blue: 14,
+} as const;
 
 /**
  * Mission limits for rescue game mechanics.

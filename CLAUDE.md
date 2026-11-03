@@ -51,7 +51,7 @@ npm run test -- -t "shows mission intro"
 
 ### Core System Flow
 
-1. **Card Generation** (`cardGenerator.ts`): Generates all possible math facts based on operation, max number, and enabled numbers filter
+1. **Fact Charts & Card Generation** (`factChart.ts`, `cardGenerator.ts`): Each operation has an 11×11 chart of facts (0–10); cards are generated for the chart facts selected in Settings
 2. **Spaced Repetition** (`spacedRepetition.ts`): Implements SM-2 algorithm to:
    - Update card difficulty (easeFactor) based on correctness and response time
    - Select which cards to show (prioritizes struggling cards and overdue reviews)
@@ -70,11 +70,19 @@ The app uses a modified SM-2 algorithm that considers both correctness and speed
 - **Intervals**: 0 days (incorrect) → 1 day → 6 days → interval * easeFactor
 - **Card selection**: Prioritizes overdue cards with low ease factors (struggling facts), then fills remaining slots with new cards
 
-### Settings and Filtering
+### Fact Charts and Settings
 
-Settings are stored separately from card progress:
-- `enabledNumbers`: Array of numbers to practice (e.g., `[0, 1, 2]` for learning 0s, 1s, 2s tables)
-- Cards are filtered to include facts where **at least one operand** is in the enabled set
+Each operation has a fixed chart (`CHART_MAX = 10` in `src/constants.ts`), laid out by `factChart.ts`:
+- Row r, column c holds `r + c` (addition) or `(r + c) − c` (subtraction), so each addition fact shares a cell with its subtraction partner. 121 facts per operation: `0 + 0`…`10 + 10` and `0 − 0`…`20 − 10`
+- **Diagonals** (constant r + c, numbered 0–20) group facts with the same sum (addition) or minuend (subtraction)
+- `FactChart.tsx` renders the chart for both Settings (editable) and the Progress page (read-only). Wide charts show stacked full facts; narrow charts (phones) show one number per cell (sum, or minuend for subtraction) with row/column headers. The switch is a CSS container query on the chart's own width; there's no horizontal scrolling
+
+Selection lives in settings, separately from card progress:
+- `enabledFacts`: card IDs selected per operation (`{ addition: string[]; subtraction: string[] }`), each operation independent
+- In Settings: tap = toggle one fact; double tap (same cell within 350 ms) = toggle its diagonal; Enter / Shift+Enter do the same from the keyboard
+- Diagonal rule: fully on → all off; fully off or partially on → all on. A double tap applies this to the selection from *before* its first tap
+- With nothing selected, Start Practice is disabled (and Game sends the player to Settings if a stored selection is empty)
+- `settings.ts` `normalizeSettings()` runs on load: it fills defaults and converts pre-chart settings (`enabledNumbers` + `maxNumber`) to the chart facts they used to practice, then drops those fields. No Dexie schema change was needed
 - Changing settings regenerates the card deck but preserves existing progress for matching cards
 
 ### Data Persistence
@@ -84,7 +92,7 @@ Settings are stored separately from card progress:
 **Database schema** (`db.ts`):
 - `cards` table: Card progress (id, easeFactor, interval, repetition, nextReview, lastReview, totalAttempts)
 - `sessions` table: Game session history
-- `settings` table: User settings (singleton key, operation, enabledNumbers, maxNumber, targetTime)
+- `settings` table: User settings (singleton key, operation, enabledFacts, cardsPerSession, targetTime)
 - `missions` table: Completed rescue missions (indexed by completedAt)
 - `currentMissionData` table: Active mission state (singleton)
 - `unlockStatusData` table: Unlocked animals/locations (singleton)
@@ -119,9 +127,14 @@ Settings are stored separately from card progress:
 - Persists across sessions in IndexedDB
 - Currently accumulation-only (no spending system in MVP)
 
+**Mastery & Progress Page** (`mastery.ts`, `ProgressPage.tsx`):
+- Each fact gets a color from its review interval (`MASTERY_INTERVAL_DAYS`): grey = never attempted, red < 1 day, yellow 1–5, green 6–13, blue ≥ 14 (mastered). Based on interval, not due date, so blue facts don't fade while waiting for review
+- The Progress page shows each operation's chart in these colors (facts not selected in Settings are faded), plus a bar with the % of *selected* facts that are blue
+- After a mission, `useNewlyMasteredFacts` compares against a pre-mission snapshot and `MasteredFactsBadge` celebrates facts that turned blue. A fact that loses blue and earns it back in a later mission is celebrated again
+
 **Sunshine Dialogue**:
 - Companion character provides context-aware encouragement
-- Different dialogue types: intro, fast-correct, slow-correct, incorrect, rescue-complete
+- Different dialogue types: intro, fast-correct, slow-correct, incorrect, rescue-complete, facts-mastered
 - Multiple phrases per type for variety (randomized selection)
 
 **All Caught Up State**:
@@ -137,14 +150,6 @@ Three tsconfig files for different contexts:
 - `tsconfig.node.json`: Node/build tool configuration (Vite config, etc.)
 
 ## Common Patterns
-
-### Fact Count Calculation
-
-Settings uses `symmetricCartesianProduct()` to calculate total facts:
-- Takes two sets: `zeroToMaxNumArray` (0 to maxNumber) and `currentChecked` (selected checkboxes)
-- Creates all unique pairs including reverse order (e.g., both 3+5 and 5+3)
-- Removes duplicates (e.g., 5+5 appears once)
-- Example: checkboxes [0,5] with maxNumber=5 → 20 unique facts
 
 ### Handling Date.now() in Components
 

@@ -1,94 +1,21 @@
 import { describe, it, expect } from 'vitest';
-import { generateAllFacts, formatProblem } from './cardGenerator';
+import { generateCards, formatProblem } from './cardGenerator';
 
-describe('generateAllFacts', () => {
-    describe('addition', () => {
-        it('generates all addition facts for given maxNumber', () => {
-            const cards = generateAllFacts('addition', 2);
-            // 3x3 = 9 facts: 0+0, 0+1, 0+2, 1+0, 1+1, 1+2, 2+0, 2+1, 2+2
-            expect(cards).toHaveLength(9);
-        });
-
-        it('generates addition facts with enabled numbers filter', () => {
-            const cards = generateAllFacts('addition', 2, [0, 1]);
-            // Enabled: 0, 1. Max: 2.
-            // Facts where at least one operand is 0 or 1:
-            // 0+0, 0+1, 0+2, 1+0, 1+1, 1+2, 2+0, 2+1 = 8 facts
-            expect(cards).toHaveLength(8);
-        });
+describe('generateCards', () => {
+    it('creates a fresh card for every chart fact', () => {
+        const cards = generateCards('addition');
+        expect(cards).toHaveLength(121);
+        expect(cards[0]).toMatchObject({ interval: 0, repetitions: 0, totalAttempts: 0 });
     });
 
-    describe('subtraction', () => {
-        it('generates only non-negative subtraction facts', () => {
-            const cards = generateAllFacts('subtraction', 3);
-
-            // Verify no negative answers
-            for (const card of cards) {
-                expect(card.problem.correctAnswer).toBeGreaterThanOrEqual(0);
-            }
-        });
-
-        it('ensures operand1 >= operand2 for all subtraction facts', () => {
-            const cards = generateAllFacts('subtraction', 5);
-
-            for (const card of cards) {
-                expect(card.problem.operand1).toBeGreaterThanOrEqual(card.problem.operand2);
-            }
-        });
-
-        it('generates correct count of subtraction facts', () => {
-            // For maxNumber=3, valid pairs where a >= b:
-            // 0-0, 1-0, 1-1, 2-0, 2-1, 2-2, 3-0, 3-1, 3-2, 3-3 = 10 facts
-            // Formula: (n+1)(n+2)/2 = (3+1)(3+2)/2 = 10
-            const cards = generateAllFacts('subtraction', 3);
-            expect(cards).toHaveLength(10);
-        });
-
-        it('generates correct answers for subtraction', () => {
-            const cards = generateAllFacts('subtraction', 5);
-
-            for (const card of cards) {
-                const { operand1, operand2, correctAnswer } = card.problem;
-                expect(correctAnswer).toBe(operand1 - operand2);
-            }
-        });
-
-        it('generates subtraction facts with enabled numbers filter', () => {
-            const cards = generateAllFacts('subtraction', 3, [2, 3]);
-
-            // Verify all cards have at least one operand in enabled set
-            for (const card of cards) {
-                const { operand1, operand2 } = card.problem;
-                const hasEnabledOperand = [2, 3].includes(operand1) || [2, 3].includes(operand2);
-                expect(hasEnabledOperand).toBe(true);
-            }
-
-            // Verify no negative results
-            for (const card of cards) {
-                expect(card.problem.correctAnswer).toBeGreaterThanOrEqual(0);
-            }
-        });
-
-        it('has fewer facts than addition for same maxNumber', () => {
-            const additionCards = generateAllFacts('addition', 5);
-            const subtractionCards = generateAllFacts('subtraction', 5);
-
-            // Addition: 6x6 = 36 facts
-            // Subtraction: (5+1)(5+2)/2 = 21 facts
-            expect(subtractionCards.length).toBeLessThan(additionCards.length);
-            expect(additionCards).toHaveLength(36);
-            expect(subtractionCards).toHaveLength(21);
-        });
+    it('creates only the enabled facts', () => {
+        const cards = generateCards('subtraction', ['subtraction-13-4', 'subtraction-2-2']);
+        expect(cards.map(card => card.problem.id)).toEqual(['subtraction-2-2', 'subtraction-13-4']);
+        expect(cards[1].problem.correctAnswer).toBe(9);
     });
 
-    describe('card IDs', () => {
-        it('includes operation in card ID', () => {
-            const addCards = generateAllFacts('addition', 2);
-            const subCards = generateAllFacts('subtraction', 2);
-
-            expect(addCards[0].problem.id).toMatch(/^addition-/);
-            expect(subCards[0].problem.id).toMatch(/^subtraction-/);
-        });
+    it('creates no cards when nothing is enabled', () => {
+        expect(generateCards('addition', [])).toEqual([]);
     });
 });
 

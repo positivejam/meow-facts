@@ -32,19 +32,10 @@ export const SUNSHINE_PHRASES = {
         "Perfect! The kitten is rescued and feeling great!",
         "Wonderful! The kitten is all warmed up thanks to you!",
     ],
-    'milestone-orange': [
-        "You passed the orange level on your {level}s!",
-    ],
-    'milestone-green': [
-        "You passed the green level on your {level}s!",
-    ],
-    'milestone-blue': [
-        "You passed the blue level on your {level}s!",
-    ],
-    'milestone-mastered': [
-        "You've MASTERED your {level}s facts! Amazing!",
-        "100% on your {level}s! You're a math superstar!",
-        "Perfect mastery of your {level}s! Incredible work!",
+    'facts-mastered': [
+        "You MASTERED {facts}! Amazing!",
+        "{facts} mastered! You're a math superstar!",
+        "Look at that, {facts} mastered! Incredible work!",
     ],
 } as const;
 
@@ -55,7 +46,7 @@ function formatProblemEquation(problem: MathProblem): string {
 export function getSunshineDialogue(
     type: SunshineDialogueType,
     problem?: MathProblem,
-    level?: number
+    masteredCount?: number
 ): string {
     const phrases = SUNSHINE_PHRASES[type];
     let phrase: string = phrases[Math.floor(Math.random() * phrases.length)];
@@ -65,8 +56,9 @@ export function getSunshineDialogue(
         phrase = phrase.replace('{equation}', equation);
     }
 
-    if (level !== undefined) {
-        phrase = phrase.replace('{level}', String(level));
+    if (masteredCount !== undefined) {
+        const facts = `${masteredCount} new fact${masteredCount === 1 ? '' : 's'}`;
+        phrase = phrase.replace('{facts}', facts);
     }
 
     return phrase;
