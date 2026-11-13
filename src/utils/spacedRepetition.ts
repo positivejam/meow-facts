@@ -1,14 +1,20 @@
 import type { MathFactCard } from '../types/game';
+import { MAX_INTERVAL_DAYS } from '../constants';
 
 /**
  * Update a card's spaced repetition data based on the attempt
  * Based on the SM-2 algorithm with modifications for response time
+ *
+ * @param canAdvance false when the card was already answered in this mission. A repeat
+ *   still records the attempt and can reset the card on a miss, but a correct repeat
+ *   leaves the schedule alone: answering again minutes later isn't evidence of retention.
  */
 export function updateCard(
     card: MathFactCard,
     isCorrect: boolean,
     responseTime: number,
-    targetTime: number = 5000
+    targetTime: number = 5000,
+    canAdvance: boolean = true
 ): MathFactCard {
     const now = Date.now();
     const newTotalAttempts = card.totalAttempts + 1;
@@ -41,6 +47,17 @@ export function updateCard(
     let newInterval = card.interval;
     let newRepetitions = card.repetitions;
 
+    if (quality >= 3 && !canAdvance) {
+        // Correct repeat within a mission: keep the schedule as it is
+        return {
+            ...card,
+            lastReviewed: now,
+            totalAttempts: newTotalAttempts,
+            correctAttempts: newCorrectAttempts,
+            averageResponseTime: newAverageResponseTime,
+        };
+    }
+
     if (quality >= 3) {
         // Correct answer
         newRepetitions += 1;
@@ -59,6 +76,7 @@ export function updateCard(
         } else {
             newInterval = Math.round(card.interval * newEaseFactor);
         }
+        newInterval = Math.min(newInterval, MAX_INTERVAL_DAYS);
     } else {
         // Incorrect or very slow answer
         newRepetitions = 0;
@@ -141,6 +159,15 @@ export function selectCards(
     const stillRemaining = cardsPerSession - selected.length;
     if (stillRemaining > 0 && reviewCards.length > reviewCount) {
         selected.push(...reviewCards.slice(reviewCount, reviewCount + stillRemaining));
+    }
+
+    // Only a few cards due: top up with warm-up cards (soonest due, least recently practiced)
+    // so the mission doesn't repeat the same one or two facts over and over.
+    // With nothing due, return empty so the caller can show "All Caught Up".
+    const shortfall = cardsPerSession - selected.length;
+    if (selected.length > 0 && shortfall > 0) {
+        const notSelected = allCards.filter(card => !selected.includes(card));
+        selected.push(...selectBonusCards(notSelected, shortfall));
     }
 
     // Shuffle the selected cards so they're not always in the same order

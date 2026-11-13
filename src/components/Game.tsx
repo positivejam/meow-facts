@@ -277,14 +277,14 @@ export function Game() {
     const handleRetryMission = async () => {
         if (!currentMission) return;
 
-        // Reset mission attempts but keep the same animal
+        // Reset mission attempts but keep the same animal. problemsInMission is kept, so facts
+        // already answered in the first try can't lengthen their review interval again.
         const resetMission: RescueMission = {
             ...currentMission,
             progress: 0,
             correctAnswers: 0,
             fastCorrectAnswers: 0,
             totalAttempts: 0,
-            problemsInMission: [],
         };
 
         setCurrentMission(resetMission);

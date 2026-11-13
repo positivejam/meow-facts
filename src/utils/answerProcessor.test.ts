@@ -178,6 +178,30 @@ describe('processAnswer', () => {
             expect(result.updatedCard.totalAttempts).toBe(1);
             expect(result.updatedCard.correctAttempts).toBe(1);
         });
+
+        it('lengthens the interval on the first answer of a fact in the mission', () => {
+            const card = createTestCard(3, 5);
+            const mission = createTestMission({ problemsInMission: ['addition-1-2'] });
+
+            const result = processAnswer(card, 8, mission, TARGET_TIME, BASE_SPARKLES, 1000, 2000);
+
+            expect(result.updatedCard.repetitions).toBe(1);
+            expect(result.updatedCard.interval).toBe(1);
+        });
+
+        it('does not lengthen the interval when the fact was already answered this mission', () => {
+            const card = { ...createTestCard(3, 5), repetitions: 1, interval: 1, totalAttempts: 1, correctAttempts: 1 };
+            const mission = createTestMission({ problemsInMission: ['addition-3-5'], progress: 2 });
+
+            const result = processAnswer(card, 8, mission, TARGET_TIME, BASE_SPARKLES, 1000, 2000);
+
+            expect(result.updatedCard.repetitions).toBe(1);
+            expect(result.updatedCard.interval).toBe(1);
+            expect(result.updatedCard.totalAttempts).toBe(2);
+            // The repeat still helps the rescue
+            expect(result.updatedMission.progress).toBe(4);
+            expect(result.recentlyEarnedSparkles).toBe(1);
+        });
     });
 
     describe('mission state tracking', () => {

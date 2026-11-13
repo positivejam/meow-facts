@@ -17,6 +17,12 @@ export const MASTERY_INTERVAL_DAYS = {
 } as const;
 
 /**
+ * Longest review interval (in days) a fact can reach. Even well-mastered facts
+ * come back about twice a year, so a mistaken or stale interval can't hide a fact for years.
+ */
+export const MAX_INTERVAL_DAYS = 180;
+
+/**
  * Mission limits for rescue game mechanics.
  * These can be adjusted to change the difficulty/length of missions.
  */

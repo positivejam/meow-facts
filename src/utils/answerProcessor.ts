@@ -55,7 +55,9 @@ export function processAnswer(
         updatedMission.completedAt = responseTimestamp;
     }
 
-    const updatedCard = updateCard(currentCard, isCorrect, responseTime, targetTime);
+    // Only a card's first answer in a mission can lengthen its review interval
+    const firstAnswerThisMission = !currentMission.problemsInMission.includes(currentCard.problem.id);
+    const updatedCard = updateCard(currentCard, isCorrect, responseTime, targetTime, firstAnswerThisMission);
 
     const newSparkles = isFastCorrect ? awardSparkles(sparkles, SPARKLES_PER_FAST_CORRECT) : null;
 

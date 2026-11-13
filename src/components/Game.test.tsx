@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 import { Game } from './Game';
 import { db } from '../utils/db';
 import { MISSION_LIMITS } from '../constants';
+import { getAllFactIds } from '../utils/factChart';
 import type { MathFactCard } from '../types/game';
 
 // Clean up DOM and close db after each test to prevent race conditions.
@@ -357,6 +358,40 @@ describe('Game - Critical User Flows', () => {
             for (const text of firstCelebrated) {
                 expect(secondCelebrated).not.toContain(text);
             }
+        }, 30000);
+    });
+
+    describe('Missions with few due facts', () => {
+        it('mixes in other facts and does not cram the one due fact to mastery', async () => {
+            const user = userEvent.setup({ delay: null });
+            // Every addition fact is scheduled in the future except 9 + 3
+            const notDueCards = getAllFactIds('addition')
+                .filter(id => id !== 'addition-9-3')
+                .map((id, i) => seededCard(id, {
+                    interval: 6, repetitions: 2, nextReview: Date.now() + (i + 1) * DAY_MS,
+                    lastReviewed: Date.now() - DAY_MS, totalAttempts: 2, correctAttempts: 2,
+                }));
+            const dueCard = seededCard('addition-9-3', {
+                interval: 0, repetitions: 0, nextReview: Date.now() - 1000,
+                lastReviewed: Date.now() - DAY_MS, totalAttempts: 3, correctAttempts: 1,
+            });
+            await db.cards.bulkPut([...notDueCards, dueCard]);
+
+            render(<Game />);
+            await acceptMission(user);
+
+            const seen = new Set<string>();
+            for (let i = 0; i < 6; i++) {
+                await waitFor(() => expect(screen.getByText(/= \?/)).toBeInTheDocument());
+                seen.add(screen.getByText(/\d+\s*\+\s*\d+/).textContent || '');
+                await answerCurrentProblem(user);
+                await user.click(await screen.findByRole('button', { name: /continue/i }));
+            }
+            expect(seen.size).toBeGreaterThan(1);
+
+            await answerUntilMissionComplete(user);
+            const stored = await db.cards.get('addition-9-3');
+            expect(stored!.interval).toBeLessThanOrEqual(1);
         }, 30000);
     });
 

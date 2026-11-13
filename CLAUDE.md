@@ -67,8 +67,9 @@ The app uses a modified SM-2 algorithm that considers both correctness and speed
 
 - **Quality scoring (0-5)**: Incorrect = 0, Correct = 2-5 based on response time vs target time
 - **Ease factor**: Increases for fast correct answers, decreases for slow/incorrect answers (min 1.3)
-- **Intervals**: 0 days (incorrect) → 1 day → 6 days → interval * easeFactor
-- **Card selection**: Prioritizes overdue cards with low ease factors (struggling facts), then fills remaining slots with new cards
+- **Intervals**: 0 days (incorrect) → 1 day → 6 days → interval * easeFactor, capped at `MAX_INTERVAL_DAYS` (180)
+- **One advance per mission**: only a card's first answer in a mission (tracked by `mission.problemsInMission`, kept across "Try Again") can lengthen its interval. Correct repeats still earn rescue progress and sparkles but leave the schedule alone; an incorrect repeat still resets the card. Without this, a fact repeated 8 times in one mission was "mastered" for decades
+- **Card selection**: Prioritizes overdue cards with low ease factors (struggling facts), then fills remaining slots with new cards. If only a few cards are due, the session is topped up to `cardsPerSession` with `selectBonusCards` picks (soonest due, least recently practiced), so a mission never loops one fact. With nothing due, selection is empty and the player sees All Caught Up
 
 ### Fact Charts and Settings
 
