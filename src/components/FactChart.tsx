@@ -24,8 +24,12 @@ interface FactChartProps {
     operation: PracticeOperation;
     /** Extra class names for a fact's cell (e.g. selection or mastery color). */
     getCellClassName: (problem: MathProblem) => string;
-    /** Text appended to a fact's accessible name (e.g. its mastery level). */
-    getCellDescription?: (problem: MathProblem) => string;
+    /**
+     * Text appended to a fact's accessible name (e.g. its mastery level). Several strings
+     * are joined with commas in the accessible name and shown on separate lines in the
+     * hover text of a read-only chart.
+     */
+    getCellDescription?: (problem: MathProblem) => string | string[];
     /** Makes the chart editable: tap toggles a fact, double tap toggles its diagonal. */
     selection?: FactChartSelection;
 }
@@ -33,6 +37,10 @@ interface FactChartProps {
 function spokenFact(problem: MathProblem): string {
     const verb = problem.operation === 'subtraction' ? 'minus' : 'plus';
     return `${problem.operand1} ${verb} ${problem.operand2}`;
+}
+
+function capitalize(text: string): string {
+    return text.charAt(0).toUpperCase() + text.slice(1);
 }
 
 /**
@@ -120,8 +128,12 @@ export function FactChart({ operation, getCellClassName, getCellDescription, sel
                 {getChartProblems(operation).map(problem => {
                     const { row, col } = getChartPosition(problem);
                     const diagonal = getDiagonal(problem);
-                    const description = getCellDescription?.(problem);
-                    const label = description ? `${spokenFact(problem)}: ${description}` : spokenFact(problem);
+                    const descriptionLines = [getCellDescription?.(problem) ?? []].flat();
+                    const withFact = (description: string) =>
+                        description ? `${spokenFact(problem)}: ${description}` : spokenFact(problem);
+                    const label = withFact(descriptionLines.join(', '));
+                    // Browsers show a newline in a title as a line break in the tooltip
+                    const tooltip = withFact(descriptionLines.map(capitalize).join('\n'));
                     const className = [
                         'fact-cell',
                         getCellClassName(problem),
@@ -142,7 +154,7 @@ export function FactChart({ operation, getCellClassName, getCellDescription, sel
 
                     if (!selection) {
                         return (
-                            <div key={problem.id} className={className} style={style} role="img" aria-label={label} title={label}>
+                            <div key={problem.id} className={className} style={style} role="img" aria-label={label} title={tooltip}>
                                 {content}
                             </div>
                         );

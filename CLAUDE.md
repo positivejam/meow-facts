@@ -131,6 +131,7 @@ Selection lives in settings, separately from card progress:
 **Mastery & Progress Page** (`mastery.ts`, `ProgressPage.tsx`):
 - Each fact gets a color from its review interval (`MASTERY_INTERVAL_DAYS`): grey = never attempted, red < 1 day, yellow 1–5, green 6–13, blue ≥ 14 (mastered). Based on interval, not due date, so blue facts don't fade while waiting for review
 - The Progress page shows each operation's chart in these colors (facts not selected in Settings are faded), plus a bar with the % of *selected* facts that are blue
+- Hovering a fact shows its name, mastery level and, for practiced facts selected in Settings, when it's next due (`describeNextTest`: "ready to test now", "next test in 12 days"). The hover text puts the due date on its own line; the cell's accessible name joins the two with a comma
 - After a mission, `useNewlyMasteredFacts` compares against a pre-mission snapshot and `MasteredFactsBadge` celebrates facts that turned blue. A fact that loses blue and earns it back in a later mission is celebrated again
 
 **Sunshine Dialogue**:

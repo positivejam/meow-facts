@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { MathFactCard } from '../types/game';
-import { getMasteryColor, isMastered } from './mastery';
+import { describeNextTest, getMasteryColor, isMastered } from './mastery';
 
 function card(interval: number, totalAttempts = 3): MathFactCard {
     return {
@@ -32,5 +32,32 @@ describe('getMasteryColor', () => {
     it('treats only blue as mastered', () => {
         expect(isMastered(card(13))).toBe(false);
         expect(isMastered(card(14))).toBe(true);
+    });
+});
+
+describe('describeNextTest', () => {
+    const DAY_MS = 24 * 60 * 60 * 1000;
+    const NOW = 1_000_000_000_000;
+    const dueIn = (days: number, totalAttempts = 3) =>
+        describeNextTest({ ...card(6, totalAttempts), nextReview: NOW + days * DAY_MS }, NOW);
+
+    it('is null for a fact that has never been tried', () => {
+        expect(dueIn(0, 0)).toBeNull();
+    });
+
+    it('says a due or overdue fact is ready now', () => {
+        expect(dueIn(0)).toBe('ready to test now');
+        expect(dueIn(-3)).toBe('ready to test now');
+    });
+
+    it('says less than a day when the test is hours away', () => {
+        expect(dueIn(0.25)).toBe('next test in less than a day');
+    });
+
+    it('counts the days until the next test', () => {
+        expect(dueIn(1)).toBe('next test in 1 day');
+        expect(dueIn(0.999)).toBe('next test in 1 day');
+        expect(dueIn(11.8)).toBe('next test in 12 days');
+        expect(dueIn(180)).toBe('next test in 180 days');
     });
 });

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import type { EnabledFacts, MathFactCard, PracticeOperation } from '../types/game';
-import { getMasteryColor, MASTERY_LEVELS, type MasteryColor } from '../utils/mastery';
+import { describeNextTest, getMasteryColor, MASTERY_LEVELS, type MasteryColor } from '../utils/mastery';
 import { FactChart } from './FactChart';
 
 interface ProgressPageProps {
@@ -22,6 +22,8 @@ const MASTERY_LABELS = Object.fromEntries(
 
 export function ProgressPage({ cards, enabledFacts, initialOperation, onClose }: ProgressPageProps) {
     const [operation, setOperation] = useState<PracticeOperation>(initialOperation);
+    // eslint-disable-next-line react-hooks/purity
+    const now = Date.now();
 
     const cardsById = new Map(cards.map(card => [card.problem.id, card]));
     const colorOf = (factId: string): MasteryColor => {
@@ -82,7 +84,11 @@ export function ProgressPage({ cards, enabledFacts, initialOperation, onClose }:
                         ].filter(Boolean).join(' ')}
                         getCellDescription={(problem) => {
                             const label = MASTERY_LABELS[colorOf(problem.id)];
-                            return selectedSet.has(problem.id) ? label : `${label} (not practicing)`;
+                            // Facts not selected in Settings won't be tested, so they get no test date
+                            if (!selectedSet.has(problem.id)) return `${label} (not practicing)`;
+                            const card = cardsById.get(problem.id);
+                            const nextTest = card ? describeNextTest(card, now) : null;
+                            return nextTest ? [label, nextTest] : label;
                         }}
                     />
 

@@ -46,7 +46,37 @@ describe('ProgressPage', () => {
         expect(cell(/^1 plus 1: /)).toHaveClass('mastery-red');
         expect(cell(/^1 plus 2: /)).toHaveClass('mastery-yellow');
         expect(cell(/^1 plus 3: /)).toHaveClass('mastery-green');
-        expect(cell(/^1 plus 4: Mastered$/)).toHaveClass('mastery-blue');
+        expect(cell(/^1 plus 4: Mastered/)).toHaveClass('mastery-blue');
+    });
+
+    it('tells when each practiced fact will be tested next', () => {
+        const DAY_MS = 24 * 60 * 60 * 1000;
+        const cards = cardsWith({
+            'addition-1-1': { interval: 0 },
+            'addition-1-2': { interval: 1 },
+            'addition-1-3': { interval: 20 },
+        }).map(card => {
+            if (card.problem.id === 'addition-1-1') return { ...card, nextReview: Date.now() - 1000 };
+            if (card.problem.id === 'addition-1-2') return { ...card, nextReview: Date.now() + DAY_MS };
+            if (card.problem.id === 'addition-1-3') return { ...card, nextReview: Date.now() + 12 * DAY_MS };
+            return card;
+        });
+        renderProgress(cards);
+
+        expect(cell(/^0 plus 0: Not tried yet$/)).toBeInTheDocument();
+        expect(cell(/^1 plus 1: Learning, ready to test now$/)).toBeInTheDocument();
+        expect(cell(/^1 plus 2: Getting there, next test in 1 day$/)).toBeInTheDocument();
+        expect(cell(/^1 plus 3: Mastered, next test in 12 days$/)).toHaveAttribute(
+            'title', '1 plus 3: Mastered\nNext test in 12 days'
+        );
+    });
+
+    it('gives no test date for facts that are not being practiced', () => {
+        const cards = cardsWith({ 'addition-2-2': { interval: 20 } })
+            .map(card => ({ ...card, nextReview: Date.now() + 5 * 24 * 60 * 60 * 1000 }));
+        renderProgress(cards, { ...ALL_FACTS, addition: ['addition-1-1'] });
+
+        expect(cell(/^2 plus 2: Mastered \(not practicing\)$/)).toBeInTheDocument();
     });
 
     it('shows the percentage of selected facts that are mastered', () => {
@@ -79,7 +109,7 @@ describe('ProgressPage', () => {
 
         await user.click(screen.getByRole('button', { name: 'Subtraction' }));
 
-        expect(cell(/^13 minus 4: Mastered$/)).toHaveClass('mastery-blue');
+        expect(cell(/^13 minus 4: Mastered/)).toHaveClass('mastery-blue');
         expect(screen.getByText('1 of 121 selected facts mastered (1%)')).toBeInTheDocument();
     });
 

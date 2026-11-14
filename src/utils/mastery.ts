@@ -27,3 +27,21 @@ export function getMasteryColor(card: MathFactCard): MasteryColor {
 export function isMastered(card: MathFactCard): boolean {
     return getMasteryColor(card) === 'blue';
 }
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * When a fact will next come up for testing, for the Progress page
+ * (e.g. "next test in 12 days"). Null for a fact that's never been tried.
+ */
+export function describeNextTest(card: MathFactCard, now: number): string | null {
+    if (card.totalAttempts === 0) return null;
+
+    const daysLeft = (card.nextReview - now) / DAY_MS;
+    if (daysLeft <= 0) return 'ready to test now';
+    // Round to the nearest day, so a fact answered a moment ago with a 1-day interval says "1 day"
+    const days = Math.round(daysLeft);
+    if (days === 0) return 'next test in less than a day';
+
+    return `next test in ${days} ${days === 1 ? 'day' : 'days'}`;
+}
